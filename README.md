@@ -1,1 +1,1 @@
-MadMik war hier
+MadMik ist ein Vollidiot
