@@ -1,0 +1,6 @@
+# Executable
+bin
+.exe
+
+go.sum
+internal/assets/dist/frontend_dist/
