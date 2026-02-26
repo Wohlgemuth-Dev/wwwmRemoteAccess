@@ -17,14 +17,19 @@ build-frontend:
 # 2. Copy the frontend dist to the backend asset directory
 copy-assets:
 	@echo "Copying assets to backend..."
-	powershell -Command "if (!(Test-Path $(ASSETS_TARGET_DIR))) { New-Item -ItemType Directory -Force $(ASSETS_TARGET_DIR) }; Copy-Item -Path $(FRONTEND_DIR)/dist/* -Destination $(ASSETS_TARGET_DIR)/ -Recurse -Force"
+	mkdir -p $(ASSETS_TARGET_DIR)
+	cp -r $(FRONTEND_DIR)/dist/* $(ASSETS_TARGET_DIR)/
 
-# 3. Build the Go backend
 build-backend:
 	@echo "Building backend..."
-	cd $(BACKEND_DIR) && go build -o bin/server.exe ./cmd/server
+	cd $(BACKEND_DIR) && go mod tidy
+	cd $(BACKEND_DIR) && go build -o bin/server ./cmd/server
 
 # Cleanup build artifacts
 clean:
 	@echo "Cleaning up..."
-	powershell -Command "Remove-Item -Recurse -Force $(FRONTEND_DIR)/dist, $(BACKEND_DIR)/bin, $(ASSETS_TARGET_DIR)"
+	rm -rf $(FRONTEND_DIR)/dist $(BACKEND_DIR)/bin $(ASSETS_TARGET_DIR)
+
+run:
+	@echo "Running backend..."
+	cd $(BACKEND_DIR) && go run ./cmd/server
