@@ -37,6 +37,8 @@ build-backend:
 	cd $(BACKEND_DIR) && go mod tidy
 	cd $(BACKEND_DIR) && go build -o bin/server ./cmd/server
 
+build: build-frontend copy-assets build-backend
+
 # Cleanup build artifacts
 clean:
 	@echo "Cleaning up..."
