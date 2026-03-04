@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"wwwmRemoteAccess/internal/api"
 	assets "wwwmRemoteAccess/internal/assets/dist"
 
 	"github.com/gofiber/fiber/v2"
@@ -24,7 +25,10 @@ func main() {
 		DisableStartupMessage: true,
 	})
 
-	// 3. Serve Frontend (Static + SPA Fallback)
+	// 3. Setup API Routes
+	api.SetupRoutes(app)
+
+	// 4. Serve Frontend (Static + SPA Fallback)
 	distFS, err := assets.GetDistFS()
 	if err != nil {
 		log.Fatalf("Failed to get dist filesystem: %v", err)
@@ -36,7 +40,7 @@ func main() {
 		Index:  "index.html",
 	}))
 
-	// 4. Start Server
+	// 5. Start Server
 	port := "8080"
 	log.Println("wwwm Remote Access Server starting:")
 	log.Printf("  ➜  Local:   http://localhost:%s", port)
