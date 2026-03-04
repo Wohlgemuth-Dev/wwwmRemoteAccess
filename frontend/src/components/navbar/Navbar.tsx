@@ -1,6 +1,12 @@
 import './Navbar.css';
+import { useAuth } from '../../service/AuthContext';
 
 const Navbar = () => {
+    const { logout } = useAuth();
+    const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        logout();
+    };
     return (
         <nav className="navbar">
             <div className="navbar-brand">
@@ -12,7 +18,7 @@ const Navbar = () => {
                 <li><a href="/system-monitor">System Monitor</a></li>
             </ul>
             <div className="navbar-actions">
-                <button className="btn-secondary" onClick={() => console.log('Logout clicked')}>Logout</button>
+                <button className="btn-secondary" onClick={handleLogout}>Logout</button>
             </div>
         </nav>
     );
