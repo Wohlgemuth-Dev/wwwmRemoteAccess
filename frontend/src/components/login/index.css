@@ -40,3 +40,10 @@
 .loginWindow button:hover {
     background-color: #0056b3;
 }
+
+.error-message {
+    color: #d9534f;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    text-align: center;
+}

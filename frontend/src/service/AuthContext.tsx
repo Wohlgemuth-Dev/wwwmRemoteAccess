@@ -23,7 +23,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Login failed';
             setError(message);
-            throw err;
         }
     };
 
