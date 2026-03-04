@@ -1,11 +1,21 @@
 import './index.css'
+import Desktop from './components/desktop';
+import LoginScreen from './components/login';
+
+const AppContent = () => {
+    const isAuthenticated = false;
+    if (!isAuthenticated) return <LoginScreen />;
+    return (
+        <Desktop />
+    );
+};
 
 function App() {
     return (
         <div className="App">
-            <h1>Work in progress...</h1>
+            <AppContent />
         </div>
-    )
+    );
 }
 
-export default App
+export default App;
