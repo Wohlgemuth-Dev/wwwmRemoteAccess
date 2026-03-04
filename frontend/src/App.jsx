@@ -1,9 +1,10 @@
 import './index.css'
 import Desktop from './components/desktop';
 import LoginScreen from './components/login';
+import { AuthProvider, useAuth } from './service/AuthContext';
 
 const AppContent = () => {
-    const isAuthenticated = false;
+    const { isAuthenticated } = useAuth();
     if (!isAuthenticated) return <LoginScreen />;
     return (
         <Desktop />
@@ -12,9 +13,11 @@ const AppContent = () => {
 
 function App() {
     return (
-        <div className="App">
-            <AppContent />
-        </div>
+        <AuthProvider>
+            <div className="App">
+                <AppContent />
+            </div>
+        </AuthProvider>
     );
 }
 
