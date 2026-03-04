@@ -7,7 +7,7 @@ const LoginScreen = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = (e: React.SubmitEvent) => {
         e.preventDefault();
         login(username, password);
     };
