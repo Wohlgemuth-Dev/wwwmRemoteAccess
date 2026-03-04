@@ -1,6 +1,11 @@
+import Navbar from "../navbar/Navbar.tsx";
+
 const Desktop = () => {
     return (
-        <div>desktop/index.tsx</div>
+        <>
+            <Navbar />
+            <div>desktop/index.tsx</div>
+        </>
     );
 };
 

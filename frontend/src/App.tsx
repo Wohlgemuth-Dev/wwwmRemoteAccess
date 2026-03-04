@@ -7,7 +7,9 @@ const AppContent = () => {
     const { isAuthenticated } = useAuth();
     if (!isAuthenticated) return <LoginScreen />;
     return (
-        <Desktop />
+        <>
+            <Desktop />
+        </>
     );
 };
 

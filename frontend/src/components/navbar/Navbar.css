@@ -11,6 +11,8 @@
     top: 0;
     z-index: 1000;
     transition: all 0.3s ease;
+    background-color: #050505;
+    color: #fff;
 }
 
 .navbar-brand a {
