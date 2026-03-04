@@ -12,6 +12,7 @@ func SetupRoutes(app *fiber.App) {
 
 	// Status endpoint
 	api.Get("/status", handlers.StatusHandler)
+	api.Get("/clock", handlers.ClockHandler)
 
 	// templates:
 	// example := api.Group("/example")
