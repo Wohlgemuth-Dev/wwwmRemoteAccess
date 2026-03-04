@@ -12,6 +12,7 @@ import (
 	assets "wwwmRemoteAccess/internal/assets/dist"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 )
 
@@ -24,6 +25,13 @@ func main() {
 	app := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
 	})
+
+	// Add CORS middleware
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:3000", // for dev
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+		AllowMethods: "GET, POST, HEAD, PUT, DELETE, PATCH, OPTIONS",
+	}))
 
 	// 3. Setup API Routes
 	api.SetupRoutes(app)
