@@ -9,9 +9,14 @@ import (
 // SetupRoutes configures all the API routes
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api")
+	auth := app.Group("/auth")
 
 	// Status endpoint
 	api.Get("/status", handlers.StatusHandler)
+
+	// Authentication endpoints
+	auth.Post("/login", handlers.LoginHandler)
+	auth.Post("/logout", handlers.LogoutHandler)
 
 	// templates:
 	// example := api.Group("/example")
