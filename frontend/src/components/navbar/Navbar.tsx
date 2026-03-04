@@ -1,58 +1,19 @@
-import { useState, useEffect } from 'react';
 import './Navbar.css';
 import { useAuth } from '../../service/AuthContext';
+import { useServerTime } from '../../hooks/useServerTime';
+
+export interface ClockResponse {
+    status: string;
+    time: string;
+}
 
 const Navbar = () => {
     const { logout } = useAuth();
-    const [systemTime, setSystemTime] = useState<string>('--:--:--');
-
+    const systemTime = useServerTime();
     const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         logout();
     };
-
-    const formatTime = (date: Date) => {
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        return `${hours}:${minutes}:${seconds}`;
-    };
-
-    useEffect(() => {
-        let currentLocalTime: Date | null = null;
-
-        const fetchTime = async () => {
-            try {
-                const response = await fetch('/api/clock');
-                const data = await response.json();
-                if (data.status === 'success') {
-                    // Parse "HH:mm:ss" from backend
-                    const [h, m, s] = data.time.split(':').map(Number);
-                    const now = new Date();
-                    now.setHours(h, m, s, 0);
-                    currentLocalTime = now;
-                    setSystemTime(formatTime(now));
-                }
-            } catch (error) {
-                console.error('Error fetching system time:', error);
-            }
-        };
-
-        fetchTime();
-        const syncInterval = setInterval(fetchTime, 30000);
-
-        const tickInterval = setInterval(() => {
-            if (currentLocalTime) {
-                currentLocalTime = new Date(currentLocalTime.getTime() + 1000);
-                setSystemTime(formatTime(currentLocalTime));
-            }
-        }, 1000);
-
-        return () => {
-            clearInterval(syncInterval);
-            clearInterval(tickInterval);
-        };
-    }, []);
 
     return (
         <nav className="navbar">
