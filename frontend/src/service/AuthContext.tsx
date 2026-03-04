@@ -12,7 +12,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [isAuthenticated, setAuth] = useState<boolean>(false);
     const [token, setToken] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -20,9 +19,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setError(null);
         try {
             const response = await authApi.login(username, password);
-            console.log(response);
             setToken(response.token);
-            setAuth(true);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Login failed';
             setError(message);
@@ -43,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return (
         <AuthContext.Provider value={{
-            isAuthenticated,
+            isAuthenticated: !!token,
             token,
             login,
             logout,
