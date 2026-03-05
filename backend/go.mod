@@ -2,7 +2,10 @@ module wwwmRemoteAccess
 
 go 1.24.2
 
-require github.com/gofiber/fiber/v2 v2.52.11
+require (
+	github.com/gofiber/fiber/v2 v2.52.11
+	github.com/msteinert/pam/v2 v2.0.0
+)
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect

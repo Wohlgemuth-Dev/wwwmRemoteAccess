@@ -36,6 +36,7 @@ build-backend:
 	@echo "Building backend..."
 	cd $(BACKEND_DIR) && go mod tidy
 	cd $(BACKEND_DIR) && go build -o bin/server ./cmd/server
+	make reload-service
 
 build: build-frontend copy-assets build-backend
 
@@ -52,3 +53,19 @@ install: all
 	@echo "Installing application..."
 	sudo cp $(BACKEND_DIR)/bin/server /usr/local/bin/wwwmRemoteAccess
 	@echo "Installed wwwmRemoteAccess to /usr/local/bin/"
+
+deploy-service:
+	@echo "Copying service file ..."
+	sudo cp wwwmremote-backend.service /etc/systemd/system/
+
+	@echo "Reloading systemd and enabling service..."
+	sudo systemctl daemon-reload
+	sudo systemctl enable wwwmremote-backend
+	sudo systemctl restart wwwmremote-backend
+	sudo systemctl status wwwmremote-backend --no-pager -l
+
+make reload-service:
+	@echo "Reloading and restarting service..."
+	sudo systemctl daemon-reload
+	sudo systemctl restart wwwmremote-backend
+	sudo systemctl status wwwmremote-backend --no-pager -l

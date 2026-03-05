@@ -1,13 +1,46 @@
 package handlers
 
 import (
+	"os"
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/msteinert/pam/v2"
 )
 
 // LoginRequest defines the structure for the login request
 type LoginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+func pamAuthenticate(username, password string) error {
+	service := os.Getenv("PAM_SERVICE")
+	if service == "" {
+		service = "wwwmremote-backend"
+	}
+
+	tx, err := pam.StartFunc(service, username, func(style pam.Style, msg string) (string, error) {
+		switch style {
+		case pam.PromptEchoOff, pam.PromptEchoOn:
+			return password, nil
+		default:
+			return "", nil
+		}
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Authenticate(0); err != nil {
+		return err
+	}
+
+	if err := tx.AcctMgmt(0); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // LoginHandler handles user login
@@ -19,8 +52,14 @@ func LoginHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// For demonstration, we'll use a static username and password
-	if req.Username != "test" || req.Password != "test" {
+	req.Username = strings.TrimSpace(req.Username)
+	if req.Username == "" || req.Password == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Username and password are required",
+		})
+	}
+
+	if err := pamAuthenticate(req.Username, req.Password); err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Invalid credentials",
 		})

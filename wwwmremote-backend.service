@@ -1,0 +1,15 @@
+[Unit]
+Description=wwwm Remote Access Backend
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/[PATH-TO-REPO]/wwwmRemoteAccess/backend
+ExecStart=/[PATH-TO-REPO]/wwwmRemoteAccess/backend/bin/server
+Restart=on-failure
+RestartSec=2
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
