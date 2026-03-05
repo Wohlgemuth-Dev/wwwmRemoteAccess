@@ -3,11 +3,11 @@ import { useAuth } from '../../service/AuthContext';
 import './index.css';
 
 const LoginScreen = () => {
-    const { login } = useAuth();
+    const { login, error } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = (e: React.SubmitEvent) => {
+    const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         login(username, password);
     };
@@ -29,6 +29,7 @@ const LoginScreen = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
+                    {error && <div className="error-message">{error}</div>}
                     <button type="submit">Login</button>
                 </form>
             </div>

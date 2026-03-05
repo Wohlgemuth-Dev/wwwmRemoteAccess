@@ -1,10 +1,17 @@
-import Navbar from "../navbar/Navbar.tsx";
+import Navbar from "../navbar/Navbar";
+import { Routes, Route, BrowserRouter } from 'react-router-dom';
+import Console from "../console/Console";
 
 const Desktop = () => {
     return (
         <>
             <Navbar />
-            <div>desktop/index.tsx</div>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/" element={<div>desktop/index.tsx</div>} />
+                    <Route path="/console" element={<Console />} />
+                </Routes>
+            </BrowserRouter>
         </>
     );
 };
