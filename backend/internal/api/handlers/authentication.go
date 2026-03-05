@@ -17,7 +17,7 @@ type LoginRequest struct {
 func pamAuthenticate(username, password string) error {
 	service := os.Getenv("PAM_SERVICE")
 	if service == "" {
-		service = "wwwmremote"
+		service = "wwwmremote-backend"
 	}
 
 	tx, err := pam.StartFunc(service, username, func(style pam.Style, msg string) (string, error) {
