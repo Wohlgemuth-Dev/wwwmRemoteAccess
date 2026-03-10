@@ -12,7 +12,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [token, setToken] = useState<string | null>(null);
+    const [token, setToken] = useState<string | null>(sessionStorage.getItem('token'));
     const [error, setError] = useState<string | null>(null);
 
     const login = async (username: string, password: string) => {
@@ -20,6 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             const response = await authApi.login(username, password);
             setToken(response.token);
+            sessionStorage.setItem('token', response.token);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Login failed';
             setError(message);
@@ -28,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const logout = async () => {
         setToken(null);
+        sessionStorage.removeItem('token');
         try {
             await authApi.logout();
         } catch (err) {

@@ -2,10 +2,14 @@ package handlers
 
 import (
 	"os"
+	"os/user"
+	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/msteinert/pam/v2"
+
+	"wwwmRemoteAccess/internal/auth"
 )
 
 // LoginRequest defines the structure for the login request
@@ -65,13 +69,34 @@ func LoginHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	u, err := user.Lookup(req.Username)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Could not find user information",
+		})
+	}
+
+	uid, _ := strconv.ParseUint(u.Uid, 10, 32)
+	gid, _ := strconv.ParseUint(u.Gid, 10, 32)
+
+	token, err := auth.GlobalStore.CreateSession(req.Username, uint32(uid), uint32(gid), u.HomeDir)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Could not create session token",
+		})
+	}
+
 	return c.JSON(fiber.Map{
-		"token": "123",
+		"token": token,
 	})
 }
 
-// LogoutHandler handles user logout
 func LogoutHandler(c *fiber.Ctx) error {
+	token, ok := c.Locals("token").(string)
+	if ok && token != "" {
+		auth.GlobalStore.DeleteSession(token)
+	}
+
 	return c.JSON(fiber.Map{
 		"message": "Logout successful",
 	})
