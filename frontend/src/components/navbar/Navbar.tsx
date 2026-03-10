@@ -19,6 +19,13 @@ const Navbar = ({ setActiveApp }: NavbarProps) => {
         logout();
     };
 
+    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, app: string) => {
+        e.preventDefault();
+        if (setActiveApp) {
+            setActiveApp(app);
+        }
+    };
+
     return (
         <nav className="navbar">
             <div className="navbar-left">
@@ -27,8 +34,8 @@ const Navbar = ({ setActiveApp }: NavbarProps) => {
                 </div>
                 <ul className="navbar-links">
                     <li><a href="/console" onClick={(e) => handleNavClick(e, 'console')}>Console</a></li>
-                <li><a href="/file-explorer" onClick={(e) => handleNavClick(e, 'file-explorer')}>File Explorer</a></li>
-                <li><a href="/system-monitor" onClick={(e) => handleNavClick(e, 'system-monitor')}>System Monitor</a></li>
+                    <li><a href="/file-explorer" onClick={(e) => handleNavClick(e, 'file-explorer')}>File Explorer</a></li>
+                    <li><a href="/system-monitor" onClick={(e) => handleNavClick(e, 'system-monitor')}>System Monitor</a></li>
                 </ul>
             </div>
 

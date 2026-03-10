@@ -7,21 +7,19 @@ ASSETS_TARGET_DIR = $(BACKEND_DIR)/internal/assets/dist/frontend_dist
 .PHONY: all check install-deps build-frontend copy-assets build-backend clean run install
 
 # Default target
-all: check build-frontend copy-assets build-backend
+all: check build-frontend copy-assets build-backend reload-service
 
 check:
 	@echo "Checking dependencies..."
 	@command -v go >/dev/null 2>&1 || { echo >&2 "Error: 'go' is not installed. Run 'make install-deps' to install."; exit 1; }
 	@command -v node >/dev/null 2>&1 || { echo >&2 "Error: 'node' is not installed. Run 'make install-deps' to install."; exit 1; }
 	@command -v npm >/dev/null 2>&1 || { echo >&2 "Error: 'npm' is not installed. Run 'make install-deps' to install."; exit 1; }
-	@dpkg -s libpam0g-dev >/dev/null 2>&1 || { echo >&2 "Error: 'libpam0g-dev' is not installed. Run 'make install-deps' to install."; exit 1; }
 	@echo "Dependencies OK"
 
 install-deps:
 	@echo "Attempting to install dependencies (requires apt)..."
 	sudo apt-get update
 	sudo apt-get install -y golang nodejs npm
-	sudo apt-get install -y libpam0g-dev
 
 # 1. Build the React frontend
 build-frontend:
@@ -38,9 +36,6 @@ build-backend:
 	@echo "Building backend..."
 	cd $(BACKEND_DIR) && go mod tidy
 	cd $(BACKEND_DIR) && go build -o bin/server ./cmd/server
-	make reload-service
-
-build: build-frontend copy-assets build-backend
 
 # Cleanup build artifacts
 clean:
@@ -66,7 +61,7 @@ deploy-service:
 	sudo systemctl restart wwwmremote-backend
 	sudo systemctl status wwwmremote-backend --no-pager -l
 
-make reload-service:
+reload-service:
 	@echo "Reloading and restarting service..."
 	sudo systemctl daemon-reload
 	sudo systemctl restart wwwmremote-backend
