@@ -6,10 +6,16 @@ const LoginScreen = () => {
     const { login, error } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        login(username, password);
+        setIsLoading(true);
+        try {
+            await login(username, password);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -22,15 +28,19 @@ const LoginScreen = () => {
                         placeholder="Username"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
+                        disabled={isLoading}
                     />
                     <input
                         type="password"
                         placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={isLoading}
                     />
                     {error && <div className="error-message">{error}</div>}
-                    <button type="submit">Login</button>
+                    <button type="submit" disabled={isLoading}>
+                        {isLoading ? 'Logging in...' : 'Login'}
+                    </button>
                 </form>
             </div>
         </div>
