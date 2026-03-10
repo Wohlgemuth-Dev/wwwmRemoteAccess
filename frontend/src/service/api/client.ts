@@ -22,6 +22,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
         ...options.headers as Record<string, string>,
     };
 
+    const token = sessionStorage.getItem('token');
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const config: RequestInit = {
         ...options,
         headers,

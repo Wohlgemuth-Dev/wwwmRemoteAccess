@@ -66,3 +66,10 @@ reload-service:
 	sudo systemctl daemon-reload
 	sudo systemctl restart wwwmremote-backend
 	sudo systemctl status wwwmremote-backend --no-pager -l
+
+disable-service:
+	@echo "Disabling service..."
+	sudo systemctl disable wwwmremote-backend
+	sudo systemctl stop wwwmremote-backend
+	sudo systemctl daemon-reload
+	sudo systemctl status wwwmremote-backend --no-pager -l
