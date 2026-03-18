@@ -14,11 +14,6 @@ type FileItem = {
 
 type ItemMenuAction = 'rename' | 'download' | 'delete';
 
-type DropTarget =
-    | { type: 'item'; key: string }
-    | { type: 'pathSegment'; path: string }
-    | null;
-
 // Constants
 const DEFAULT_PATH = 'C:\\Users\\Lukas\\Documents';
 const FALLBACK_FOLDER = 'Folder';
@@ -105,8 +100,8 @@ const FileExplorer: React.FC = () => {
     const [showScrollHint, setShowScrollHint] = useState(false);
     const [selectedItemKeys, setSelectedItemKeys] = useState<string[]>([]);
     const [openItemMenuKey, setOpenItemMenuKey] = useState<string | null>(null);
-    const [draggedItemKeys, setDraggedItemKeys] = useState<string[]>([]);
-    const [dropTarget, setDropTarget] = useState<DropTarget>(null);
+    const [draggedItemKey, setDraggedItemKey] = useState<string | null>(null);
+    const [dropTargetItemKey, setDropTargetItemKey] = useState<string | null>(null);
     const pathInputRef = useRef<HTMLInputElement>(null);
     const breadcrumbsRef = useRef<HTMLDivElement>(null);
     const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
@@ -115,7 +110,6 @@ const FileExplorer: React.FC = () => {
     const sortedFolderContents = useMemo(() => sortFolderContents(FOLDER_CONTENTS), []);
     const allItemKeys = useMemo(() => sortedFolderContents.map(getItemKey), [sortedFolderContents]);
     const selectedItemKeySet = useMemo(() => new Set(selectedItemKeys), [selectedItemKeys]);
-    const draggedItemKeySet = useMemo(() => new Set(draggedItemKeys), [draggedItemKeys]);
     const selectedCount = selectedItemKeys.length;
     const totalCount = allItemKeys.length;
     const isSelectAllChecked = totalCount > 0 && selectedCount === totalCount;
@@ -275,51 +269,6 @@ const FileExplorer: React.FC = () => {
         setCurrentPath(segmentPath);
     };
 
-    // Generic drop target handlers
-    const handleDropTargetDragOver = (target: DropTarget) => (e: React.DragEvent<any>) => {
-        if (draggedItemKeys.length === 0 || !target) {
-            return;
-        }
-
-        e.preventDefault();
-        e.stopPropagation();
-        e.dataTransfer.dropEffect = 'move';
-        setDropTarget(target);
-    };
-
-    const handleDropTargetDragLeave = () => (e: React.DragEvent<any>) => {
-        e.stopPropagation();
-        setDropTarget(null);
-    };
-
-    const handleDropTargetDrop = (target: DropTarget) => (e: React.DragEvent<any>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setDropTarget(null);
-
-        if (!target || draggedItemKeys.length === 0) {
-            return;
-        }
-
-        if (target.type === 'item') {
-            const targetItemKey = target.key;
-            const targetIsInSelection = draggedItemKeys.includes(targetItemKey);
-            if (targetIsInSelection) {
-                return;
-            }
-            // TODO: wire move behavior to backend API for one or more items (e.g. move into folder).
-        } else if (target.type === 'pathSegment') {
-            const targetPath = target.path;
-            const targetIsCurrentPath = targetPath === currentPath;
-            if (targetIsCurrentPath) {
-                return;
-            }
-            // TODO: wire move behavior to backend API - move draggedItemKeys to targetPath.
-        }
-
-        setDraggedItemKeys([]);
-    };
-
     // Selection handling
     const handleSelectAllChange = (checked: boolean) => {
         setSelectedItemKeys(checked ? allItemKeys : []);
@@ -393,28 +342,30 @@ const FileExplorer: React.FC = () => {
 
     // Drag and drop interactions
     const handleItemDragStart = (itemKey: string) => (e: React.DragEvent<HTMLDivElement>) => {
-        const itemKeysToDrag = selectedItemKeySet.has(itemKey) ? selectedItemKeys : [itemKey];
-
-        setOpenItemMenuKey(null);
-        setSelectedItemKeys(itemKeysToDrag);
-        setDraggedItemKeys(itemKeysToDrag);
-
+        setDraggedItemKey(itemKey);
         e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', itemKey);
     };
 
     const handleItemDragOver = (targetItem: FileItem) => (e: React.DragEvent<HTMLDivElement>) => {
-        if (targetItem.type !== 'folder' || draggedItemKeys.length === 0) {
+        if (targetItem.type !== 'folder') {
             return;
         }
 
         const itemKey = getItemKey(targetItem);
-        handleDropTargetDragOver({ type: 'item', key: itemKey })(e);
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+
+        if (draggedItemKey && draggedItemKey !== itemKey) {
+            setDropTargetItemKey(itemKey);
+        }
     };
 
     const handleItemDragLeave = (itemKey: string) => (e: React.DragEvent<HTMLDivElement>) => {
         e.stopPropagation();
-        if (dropTarget?.type === 'item' && dropTarget?.key === itemKey) {
-            setDropTarget(null);
+        if (dropTargetItemKey === itemKey) {
+            setDropTargetItemKey(null);
         }
     };
 
@@ -423,13 +374,25 @@ const FileExplorer: React.FC = () => {
             return;
         }
 
-        const itemKey = getItemKey(targetItem);
-        handleDropTargetDrop({ type: 'item', key: itemKey })(e);
+        e.preventDefault();
+        e.stopPropagation();
+
+        const sourceItemKey = draggedItemKey ?? e.dataTransfer.getData('text/plain');
+        const targetItemKey = getItemKey(targetItem);
+
+        setDropTargetItemKey(null);
+        setDraggedItemKey(null);
+
+        if (!sourceItemKey || sourceItemKey === targetItemKey) {
+            return;
+        }
+
+        // TODO: wire move behavior (e.g. move into folder / backend operation).
     };
 
     const handleItemDragEnd = () => {
-        setDraggedItemKeys([]);
-        setDropTarget(null);
+        setDraggedItemKey(null);
+        setDropTargetItemKey(null);
     };
 
     const isItemSelected = (itemKey: string) => selectedItemKeySet.has(itemKey);
@@ -461,15 +424,8 @@ const FileExplorer: React.FC = () => {
                                         </span>
                                     )}
                                     <button
-                                        className={`path-segment${
-                                            dropTarget?.type === 'pathSegment' && dropTarget?.path === segment.fullPath
-                                                ? ' is-drop-target'
-                                                : ''
-                                        }`}
+                                        className="path-segment"
                                         onClick={handlePathSegmentClick(segment.fullPath)}
-                                        onDragOver={handleDropTargetDragOver({ type: 'pathSegment', path: segment.fullPath })}
-                                        onDragLeave={handleDropTargetDragLeave()}
-                                        onDrop={handleDropTargetDrop({ type: 'pathSegment', path: segment.fullPath })}
                                     >
                                         {segment.label}
                                     </button>
@@ -516,11 +472,8 @@ const FileExplorer: React.FC = () => {
                         const itemKey = getItemKey(item);
                         const selected = isItemSelected(itemKey);
                         const isItemMenuOpen = openItemMenuKey === itemKey;
-                        const isItemDropTarget =
-                            item.type === 'folder' &&
-                            dropTarget?.type === 'item' &&
-                            dropTarget?.key === itemKey;
-                        const isItemDragging = draggedItemKeySet.has(itemKey);
+                        const isItemDropTarget = item.type === 'folder' && dropTargetItemKey === itemKey;
+                        const isItemDragging = draggedItemKey === itemKey;
 
                         return (
                             <div

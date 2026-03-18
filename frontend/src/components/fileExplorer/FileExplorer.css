@@ -35,6 +35,30 @@
     padding: 0.75rem;
     background: linear-gradient(180deg, rgba(12, 12, 16, 0.82), rgba(10, 10, 14, 0.92));
     overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) var(--surface-soft);
+}
+
+.file-explorer-content::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.file-explorer-content::-webkit-scrollbar-track {
+    background: var(--surface-soft);
+    border-radius: 999px;
+}
+
+.file-explorer-content::-webkit-scrollbar-thumb {
+    background: var(--border-soft);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.file-explorer-content::-webkit-scrollbar-thumb:hover {
+    background: var(--border-strong);
+    background-clip: content-box;
 }
 
 .file-list {
@@ -193,14 +217,14 @@
 }
 
 .file-item.is-dragging {
-    opacity: 0.6;
+    opacity: 0.45;
     transform: scale(0.98);
 }
 
 .file-item.is-drop-target {
-    border-color: rgba(123, 167, 214, 0.7);
-    box-shadow: inset 0 0 0 1px rgba(123, 167, 214, 0.35);
-    background: rgba(123, 167, 214, 0.16);
+    border-color: var(--border-strong);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .file-item.folder .file-icon {
@@ -286,12 +310,6 @@
 .path-segment:hover {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.2);
-}
-
-.path-segment.is-drop-target {
-    background: rgba(123, 167, 214, 0.2);
-    border-color: rgba(123, 167, 214, 0.6);
-    box-shadow: inset 0 0 0 1px rgba(123, 167, 214, 0.35);
 }
 
 .path-separator {
