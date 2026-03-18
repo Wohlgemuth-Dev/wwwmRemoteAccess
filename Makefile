@@ -14,12 +14,14 @@ check:
 	@command -v go >/dev/null 2>&1 || { echo >&2 "Error: 'go' is not installed. Run 'make install-deps' to install."; exit 1; }
 	@command -v node >/dev/null 2>&1 || { echo >&2 "Error: 'node' is not installed. Run 'make install-deps' to install."; exit 1; }
 	@command -v npm >/dev/null 2>&1 || { echo >&2 "Error: 'npm' is not installed. Run 'make install-deps' to install."; exit 1; }
+	@dpkg -s libpam0g-dev >/dev/null 2>&1 || { echo >&2 "Error: 'libpam0g-dev' is not installed. Run 'make install-deps' to install."; exit 1; }
 	@echo "Dependencies OK"
 
 install-deps:
 	@echo "Attempting to install dependencies (requires apt)..."
 	sudo apt-get update
 	sudo apt-get install -y golang nodejs npm
+	sudo apt-get install -y libpam0g-dev
 
 # 1. Build the React frontend
 build-frontend:
