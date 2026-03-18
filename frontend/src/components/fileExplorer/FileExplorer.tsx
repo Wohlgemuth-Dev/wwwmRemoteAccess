@@ -12,6 +12,8 @@ type FileItem = {
     type: 'file' | 'folder';
 };
 
+type ItemMenuAction = 'rename' | 'download' | 'delete';
+
 // Constants
 const DEFAULT_PATH = 'C:\\Users\\Lukas\\Documents';
 const FALLBACK_FOLDER = 'Folder';
@@ -19,10 +21,29 @@ const FOLDER_CONTENTS: FileItem[] = [
     { name: 'File1.txt', type: 'file' },
     { name: 'File2.txt', type: 'file' },
     { name: 'Subfolder', type: 'folder' },
+    { name: 'AnotherFile.docx', type: 'file' },
+    { name: 'ZippedFolder.zip', type: 'folder' },
+    { name: 'Image.png', type: 'file' },
+    { name: 'Music.mp3', type: 'file' },
+    { name: 'Projects', type: 'folder' },
+    { name: 'Notes.txt', type: 'file' },
+    { name: 'Archive.rar', type: 'folder' },
+    { name: 'Presentation.pptx', type: 'file' },
+    { name: 'Videos', type: 'folder' },
+    { name: 'Spreadsheet.xlsx', type: 'file' },
+    { name: 'OldFiles', type: 'folder' },
 ];
 
 // Pure helpers
 const getItemKey = (item: FileItem) => `${item.type}:${item.name}`;
+
+const toggleItemInList = (items: string[], item: string) => {
+    if (items.includes(item)) {
+        return items.filter((entry) => entry !== item);
+    }
+
+    return [...items, item];
+};
 
 const sortFolderContents = (items: FileItem[]) => {
     return [...items].sort((a, b) => {
@@ -79,18 +100,23 @@ const FileExplorer: React.FC = () => {
     const [showScrollHint, setShowScrollHint] = useState(false);
     const [selectedItemKeys, setSelectedItemKeys] = useState<string[]>([]);
     const [openItemMenuKey, setOpenItemMenuKey] = useState<string | null>(null);
+    const [draggedItemKey, setDraggedItemKey] = useState<string | null>(null);
+    const [dropTargetItemKey, setDropTargetItemKey] = useState<string | null>(null);
     const pathInputRef = useRef<HTMLInputElement>(null);
     const breadcrumbsRef = useRef<HTMLDivElement>(null);
     const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
 
     // Derived values
     const sortedFolderContents = useMemo(() => sortFolderContents(FOLDER_CONTENTS), []);
-    const allItemKeys = sortedFolderContents.map(getItemKey);
+    const allItemKeys = useMemo(() => sortedFolderContents.map(getItemKey), [sortedFolderContents]);
     const selectedItemKeySet = useMemo(() => new Set(selectedItemKeys), [selectedItemKeys]);
     const selectedCount = selectedItemKeys.length;
     const totalCount = allItemKeys.length;
     const isSelectAllChecked = totalCount > 0 && selectedCount === totalCount;
     const isSelectAllIndeterminate = selectedCount > 0 && selectedCount < totalCount;
+    const pathSegments = useMemo(() => buildPathSegments(currentPath), [currentPath]);
+    const canNavigateUp = pathSegments.length > 1;
+    const currentFolder = pathSegments[pathSegments.length - 1]?.label ?? FALLBACK_FOLDER;
 
     // Effects
     useEffect(() => {
@@ -111,6 +137,33 @@ const FileExplorer: React.FC = () => {
             selectAllCheckboxRef.current.indeterminate = isSelectAllIndeterminate;
         }
     }, [isSelectAllIndeterminate]);
+
+    useEffect(() => {
+        const handleSelectAllShortcut = (e: KeyboardEvent) => {
+            const isSelectAllShortcut = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a';
+            if (!isSelectAllShortcut) {
+                return;
+            }
+
+            const activeElement = document.activeElement as HTMLElement | null;
+            const isTypingTarget =
+                activeElement?.tagName === 'INPUT' ||
+                activeElement?.tagName === 'TEXTAREA' ||
+                activeElement?.isContentEditable;
+
+            if (isTypingTarget) {
+                return;
+            }
+
+            e.preventDefault();
+            setSelectedItemKeys(allItemKeys);
+        };
+
+        window.addEventListener('keydown', handleSelectAllShortcut);
+        return () => {
+            window.removeEventListener('keydown', handleSelectAllShortcut);
+        };
+    }, [allItemKeys]);
 
     useEffect(() => {
         const updateScrollHint = () => {
@@ -152,10 +205,6 @@ const FileExplorer: React.FC = () => {
         setIsEditingPath(false);
     };
 
-    const pathSegments = buildPathSegments(currentPath);
-    const canNavigateUp = pathSegments.length > 1;
-    const currentFolder = pathSegments[pathSegments.length - 1]?.label ?? FALLBACK_FOLDER;
-
     // Toolbar actions
     const navigateUp = () => {
         if (!canNavigateUp) {
@@ -166,6 +215,18 @@ const FileExplorer: React.FC = () => {
         if (parentPath) {
             setCurrentPath(parentPath);
         }
+    };
+
+    const handleFolderOpen = (item: FileItem) => {
+        if (item.type !== 'folder') {
+            return;
+        }
+
+        setCurrentPath((prevPath) => {
+            const sanitizedBase = prevPath.replace(/[\\/]+$/, '');
+            const separator = sanitizedBase.includes('\\') ? '\\' : '/';
+            return `${sanitizedBase}${separator}${item.name}`;
+        });
     };
 
     const handleDownload = (itemsToDownload: string[]) => {
@@ -232,9 +293,8 @@ const FileExplorer: React.FC = () => {
     };
 
     const handleTileSelectionToggle = (itemKey: string) => {
-        const isSelected = selectedItemKeySet.has(itemKey);
         setOpenItemMenuKey(null);
-        updateItemSelection(itemKey, !isSelected);
+        setSelectedItemKeys((prev) => toggleItemInList(prev, itemKey));
     };
 
     const clearSelection = () => {
@@ -262,9 +322,7 @@ const FileExplorer: React.FC = () => {
         setOpenItemMenuKey(itemKey);
     };
 
-    const handleItemMenuAction = (action: string, itemKey: string) => {
-        void action;
-        void itemKey;
+    const handleItemMenuAction = (action: ItemMenuAction, itemKey: string) => {
         setOpenItemMenuKey(null);
 
         switch (action) {
@@ -281,6 +339,63 @@ const FileExplorer: React.FC = () => {
                 break;
         }
     };
+
+    // Drag and drop interactions
+    const handleItemDragStart = (itemKey: string) => (e: React.DragEvent<HTMLDivElement>) => {
+        setDraggedItemKey(itemKey);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', itemKey);
+    };
+
+    const handleItemDragOver = (targetItem: FileItem) => (e: React.DragEvent<HTMLDivElement>) => {
+        if (targetItem.type !== 'folder') {
+            return;
+        }
+
+        const itemKey = getItemKey(targetItem);
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+
+        if (draggedItemKey && draggedItemKey !== itemKey) {
+            setDropTargetItemKey(itemKey);
+        }
+    };
+
+    const handleItemDragLeave = (itemKey: string) => (e: React.DragEvent<HTMLDivElement>) => {
+        e.stopPropagation();
+        if (dropTargetItemKey === itemKey) {
+            setDropTargetItemKey(null);
+        }
+    };
+
+    const handleItemDrop = (targetItem: FileItem) => (e: React.DragEvent<HTMLDivElement>) => {
+        if (targetItem.type !== 'folder') {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const sourceItemKey = draggedItemKey ?? e.dataTransfer.getData('text/plain');
+        const targetItemKey = getItemKey(targetItem);
+
+        setDropTargetItemKey(null);
+        setDraggedItemKey(null);
+
+        if (!sourceItemKey || sourceItemKey === targetItemKey) {
+            return;
+        }
+
+        // TODO: wire move behavior (e.g. move into folder / backend operation).
+    };
+
+    const handleItemDragEnd = () => {
+        setDraggedItemKey(null);
+        setDropTargetItemKey(null);
+    };
+
+    const isItemSelected = (itemKey: string) => selectedItemKeySet.has(itemKey);
 
     // Render
     return (
@@ -335,10 +450,17 @@ const FileExplorer: React.FC = () => {
                     />
                     <span className="nav-checkbox-label">Select All</span>
                 </label>
-                <button type="button" className="nav-download-button" onClick={() => handleDownload(selectedItemKeys)}>
+
+                <button type="button" className="nav-delete-button" onClick={() => handleDelete(selectedItemKeys)} disabled={selectedItemKeys.length === 0}>
+                    <span className="nav-delete-icon">🗑</span>
+                    <span className="nav-delete-label">Delete</span>
+                </button>
+
+                <button type="button" className="nav-download-button" onClick={() => handleDownload(selectedItemKeys)} disabled={selectedItemKeys.length === 0}>
                     <span className="nav-download-icon">⇩</span>
                     <span className="nav-download-label">Download</span>
                 </button>
+
                 <button type="button" className="nav-upload-button" onClick={handleUpload}>
                     <span className="nav-upload-icon">⇧</span>
                     <span className="nav-upload-label">Upload</span>
@@ -348,20 +470,29 @@ const FileExplorer: React.FC = () => {
                 <div className="file-list" onClick={handleBlankAreaClick}>
                     {sortedFolderContents.map((item) => {
                         const itemKey = getItemKey(item);
-                        const isItemSelected = selectedItemKeySet.has(itemKey);
+                        const selected = isItemSelected(itemKey);
                         const isItemMenuOpen = openItemMenuKey === itemKey;
+                        const isItemDropTarget = item.type === 'folder' && dropTargetItemKey === itemKey;
+                        const isItemDragging = draggedItemKey === itemKey;
 
                         return (
                             <div
                                 key={itemKey}
-                                className={`file-item ${item.type}${isItemSelected ? ' is-selected' : ''}`}
+                                className={`file-item ${item.type}${selected ? ' is-selected' : ''}${isItemDragging ? ' is-dragging' : ''}${isItemDropTarget ? ' is-drop-target' : ''}`}
                                 onClick={() => handleTileSelectionToggle(itemKey)}
+                                onDoubleClick={() => handleFolderOpen(item)}
                                 onContextMenu={handleItemContextMenu(itemKey)}
+                                draggable
+                                onDragStart={handleItemDragStart(itemKey)}
+                                onDragOver={handleItemDragOver(item)}
+                                onDragLeave={handleItemDragLeave(itemKey)}
+                                onDrop={handleItemDrop(item)}
+                                onDragEnd={handleItemDragEnd}
                             >
                                 <input
                                     type="checkbox"
                                     className="checkbox-control file-item-checkbox"
-                                    checked={isItemSelected}
+                                    checked={selected}
                                     onChange={(e) => handleItemCheckboxChange(itemKey, e.target.checked)}
                                     onClick={(e) => e.stopPropagation()}
                                 />
