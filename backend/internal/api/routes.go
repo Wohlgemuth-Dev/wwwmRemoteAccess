@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 
 	"wwwmRemoteAccess/internal/api/handlers"
@@ -25,6 +26,16 @@ func SetupRoutes(app *fiber.App) {
 	// Status endpoint
 	api.Get("/status", handlers.StatusHandler)
 	api.Get("/clock", handlers.ClockHandler)
+	
+	api.Use("/console", func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
+	api.Get("/console", websocket.New(handlers.ConsoleWebSocketHandler, websocket.Config{
+		Subprotocols: []string{"access_token"},
+	}))
 
 	// templates:
 	// example := api.Group("/example")
