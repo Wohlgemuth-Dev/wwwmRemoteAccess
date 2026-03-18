@@ -28,11 +28,31 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
         dropTargetId: null,
     });
 
+    const setDropTarget = (dropTargetType: DragContext['dropTargetType'], dropTargetId: string | null) => {
+        setDragContext((prev) => {
+            if (prev.dropTargetType === dropTargetType && prev.dropTargetId === dropTargetId) {
+                return prev;
+            }
+
+            return {
+                ...prev,
+                dropTargetType,
+                dropTargetId,
+            };
+        });
+    };
+
     const clearDragContext = () => {
-        setDragContext({
-            draggedItemKeys: [],
-            dropTargetType: null,
-            dropTargetId: null,
+        setDragContext((prev) => {
+            if (prev.draggedItemKeys.length === 0 && prev.dropTargetType === null && prev.dropTargetId === null) {
+                return prev;
+            }
+
+            return {
+                draggedItemKeys: [],
+                dropTargetType: null,
+                dropTargetId: null,
+            };
         });
     };
 
@@ -43,22 +63,14 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
         e.preventDefault();
         e.stopPropagation();
         e.dataTransfer.dropEffect = 'move';
-        setDragContext((prev) => ({
-            ...prev,
-            dropTargetType: 'breadcrumb',
-            dropTargetId: targetPath,
-        }));
+        setDropTarget('breadcrumb', targetPath);
     };
 
     const handleBreadcrumbDragLeave = (e: React.DragEvent<HTMLButtonElement>) => {
         const targetPath = e.currentTarget.dataset.targetPath;
         e.stopPropagation();
         if (dragContext.dropTargetId === targetPath) {
-            setDragContext((prev) => ({
-                ...prev,
-                dropTargetType: null,
-                dropTargetId: null,
-            }));
+            setDropTarget(null, null);
         }
     };
 
@@ -95,20 +107,12 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
         e.preventDefault();
         e.stopPropagation();
         e.dataTransfer.dropEffect = 'move';
-        setDragContext((prev) => ({
-            ...prev,
-            dropTargetType: 'item',
-            dropTargetId: itemKey,
-        }));
+        setDropTarget('item', itemKey);
     };
 
     const handleItemDragLeave = (itemKey: string) => (_e: React.DragEvent<HTMLDivElement>) => {
         if (dragContext.dropTargetId === itemKey) {
-            setDragContext((prev) => ({
-                ...prev,
-                dropTargetType: null,
-                dropTargetId: null,
-            }));
+            setDropTarget(null, null);
         }
     };
 

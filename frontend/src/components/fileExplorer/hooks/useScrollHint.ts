@@ -1,18 +1,22 @@
 import { useEffect, useState } from 'react';
 
 export const useScrollHint = (breadcrumbsRef: React.RefObject<HTMLDivElement | null>, isEditingPath: boolean, currentPath: string) => {
-    const [showScrollHint, setShowScrollHint] = useState(false);
+    const [showScrollHintRight, setShowScrollHintRight] = useState(false);
+    const [showScrollHintLeft, setShowScrollHintLeft] = useState(false);
 
     useEffect(() => {
         const updateScrollHint = () => {
             if (!breadcrumbsRef.current || isEditingPath) {
-                setShowScrollHint(false);
+                setShowScrollHintRight(false);
+                setShowScrollHintLeft(false);
                 return;
             }
 
             const { scrollLeft, scrollWidth, clientWidth } = breadcrumbsRef.current;
+            const canScrollLeft = scrollLeft > 1;
             const canScrollRight = scrollLeft + clientWidth < scrollWidth - 1;
-            setShowScrollHint(canScrollRight);
+            setShowScrollHintLeft(canScrollLeft);
+            setShowScrollHintRight(canScrollRight);
         };
 
         updateScrollHint();
@@ -32,5 +36,5 @@ export const useScrollHint = (breadcrumbsRef: React.RefObject<HTMLDivElement | n
         };
     }, [breadcrumbsRef, currentPath, isEditingPath]);
 
-    return { showScrollHint };
+    return { showScrollHintLeft, showScrollHintRight };
 };

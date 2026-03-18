@@ -17,33 +17,6 @@ export const useFileSelection = (allItemKeys: string[]) => {
         }
     }, [isSelectAllIndeterminate]);
 
-    useEffect(() => {
-        const handleSelectAllShortcut = (e: KeyboardEvent) => {
-            const isSelectAllShortcut = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a';
-            if (!isSelectAllShortcut) {
-                return;
-            }
-
-            const activeElement = document.activeElement as HTMLElement | null;
-            const isTypingTarget =
-                activeElement?.tagName === 'INPUT' ||
-                activeElement?.tagName === 'TEXTAREA' ||
-                activeElement?.isContentEditable;
-
-            if (isTypingTarget) {
-                return;
-            }
-
-            e.preventDefault();
-            setSelectedItemKeys(allItemKeys);
-        };
-
-        window.addEventListener('keydown', handleSelectAllShortcut);
-        return () => {
-            window.removeEventListener('keydown', handleSelectAllShortcut);
-        };
-    }, [allItemKeys]);
-
     const handleSelectAllChange = (checked: boolean) => {
         setSelectedItemKeys(checked ? allItemKeys : []);
     };

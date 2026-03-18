@@ -5,7 +5,6 @@ import { SelectionBar } from './SelectionBar';
 
 interface FileExplorerNavBarProps {
     path: {
-        currentPath: string;
         currentFolder: string;
         pathSegments: PathSegment[];
     };
@@ -19,7 +18,6 @@ interface FileExplorerNavBarProps {
     navigation: {
         canNavigateUp: boolean;
         navigateUp: () => void;
-        handleFolderOpen: (item: any) => void;
     };
     pathHandlers: {
         handlePathInputKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -28,29 +26,21 @@ interface FileExplorerNavBarProps {
     selection: {
         selectedItemKeys: string[];
         selectedCount: number;
-        totalCount: number;
     };
     selectAll: {
         isSelectAllChecked: boolean;
-        isSelectAllIndeterminate: boolean;
         selectAllCheckboxRef: React.RefObject<HTMLInputElement | null>;
         handleSelectAllChange: (checked: boolean) => void;
     };
-    selectionHandlers: {
-        handleSelectAllChange: (checked: boolean) => void;
-        handleItemCheckboxChange: (itemKey: string, checked: boolean) => void;
-        handleTileSelectionToggle: (itemKey: string) => void;
-        handleBlankAreaClick: (e: React.MouseEvent<HTMLDivElement>) => void;
-        handleItemMenuToggle: (itemKey: string) => void;
-        handleItemContextMenu: (itemKey: string) => (e: React.MouseEvent<HTMLDivElement>) => void;
-    };
     breadcrumbsRef: React.RefObject<HTMLDivElement | null>;
-    showScrollHint: boolean;
+    showScrollHintLeft: boolean;
+    showScrollHintRight: boolean;
     onRefresh: () => void;
     onUpload: () => void;
     onDelete: (keys: string[]) => void;
     onDownload: (keys: string[]) => void;
     onCopy: (keys: string[]) => void;
+    onPaste: () => void;
     dragContext: DragContext;
     breadcrumbDragHandlers: {
         handleDragOver: (e: React.DragEvent<HTMLButtonElement>) => void;
@@ -67,12 +57,14 @@ export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
     selection,
     selectAll,
     breadcrumbsRef,
-    showScrollHint,
+    showScrollHintLeft,
+    showScrollHintRight,
     onRefresh,
     onUpload,
     onDelete,
     onDownload,
     onCopy,
+    onPaste,
     dragContext,
     breadcrumbDragHandlers,
 }) => {
@@ -88,7 +80,8 @@ export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
                 onPathInputKeyDown={pathHandlers.handlePathInputKeyDown}
                 pathInputRef={editing.pathInputRef}
                 breadcrumbsRef={breadcrumbsRef}
-                showScrollHint={showScrollHint}
+                showScrollHintLeft={showScrollHintLeft}
+                showScrollHintRight={showScrollHintRight}
                 canNavigateUp={navigation.canNavigateUp}
                 onNavigateUp={navigation.navigateUp}
                 onRefresh={onRefresh}
@@ -111,6 +104,10 @@ export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
             <button type="button" className="nav-upload-button" onClick={onUpload} title="Upload files">
                 <span className="nav-upload-icon">⇧</span>
                 <span className="nav-upload-label">Upload</span>
+            </button>
+            <button type="button" className="nav-paste-button" onClick={onPaste} title="Paste files">
+                <span className="nav-paste-icon">⎘</span>
+                <span className="nav-paste-label">Paste</span>
             </button>
         </div>
     );

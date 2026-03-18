@@ -8,7 +8,7 @@ export type FileItem = {
     type: 'file' | 'folder';
 };
 
-export type ItemMenuAction = 'rename' | 'download' | 'delete';
+export type ItemMenuAction = 'rename' | 'download' | 'delete' | 'copy';
 
 export type DragContext = {
     draggedItemKeys: string[];

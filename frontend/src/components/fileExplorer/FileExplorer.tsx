@@ -1,28 +1,19 @@
 import React, { useMemo, useRef } from 'react';
 import './FileExplorer.css';
+import { useExplorerShortcuts } from './hooks/useExplorerShortcuts';
+import { useFileOperations } from './hooks/useFileOperations';
 import {
     useDragAndDrop,
     useFileSelection,
     usePathNavigation,
     useScrollHint,
 } from './hooks';
-import type { ItemMenuAction, FileItem } from './hooks';
+import type { FileItem } from './hooks';
 import { FileExplorerNavBar, FileGrid } from './components';
 import { DEFAULT_PATH, FALLBACK_FOLDER, MOCK_FOLDER_CONTENTS } from './constants';
 
 // Pure helpers
 const getItemKey = (item: FileItem) => `${item.type}:${item.name}`;
-
-const getItemNameFromKey = (itemKey: string) => {
-    const separatorIndex = itemKey.indexOf(':');
-    return separatorIndex >= 0 ? itemKey.slice(separatorIndex + 1) : itemKey;
-};
-
-const buildChildPath = (basePath: string, childName: string) => {
-    const sanitizedBase = basePath.replace(/[\\/]+$/, '');
-    const separator = sanitizedBase.includes('\\') ? '\\' : '/';
-    return `${sanitizedBase}${separator}${childName}`;
-};
 
 const sortFolderContents = (items: FileItem[]) => {
     return [...items].sort((a, b) => {
@@ -53,79 +44,39 @@ const FileExplorer: React.FC = () => {
 
     const currentPath = pathNavigation.path.currentPath;
 
+    const fileOperations = useFileOperations({
+        currentPath,
+        closeItemMenu: () => fileSelection.menu.setOpenItemMenuKey(null),
+    });
+
     // Scroll hint
-    const { showScrollHint } = useScrollHint(breadcrumbsRef, pathNavigation.editing.isEditingPath, pathNavigation.path.currentPath);
+    const { showScrollHintLeft, showScrollHintRight } = useScrollHint(
+        breadcrumbsRef,
+        pathNavigation.editing.isEditingPath,
+        pathNavigation.path.currentPath,
+    );
 
     // Drag & Drop
     const dragAndDrop = useDragAndDrop({
         getItemKey,
         onDropToPath: (sourceItemKeys, segmentPath) => {
-            const sourceItemPaths = sourceItemKeys.map((itemKey) => buildChildPath(currentPath, getItemNameFromKey(itemKey)));
-            handleMove(sourceItemPaths, segmentPath);
+            const sourceItemPaths = fileOperations.buildPathsFromKeys(sourceItemKeys);
+            fileOperations.handleMove(sourceItemPaths, segmentPath);
         },
         onDropToFolder: (sourceItemKeys, targetItem) => {
-            const sourceItemPaths = sourceItemKeys.map((itemKey) => buildChildPath(currentPath, getItemNameFromKey(itemKey)));
-            const targetPath = buildChildPath(currentPath, targetItem.name);
-            handleMove(sourceItemPaths, targetPath);
+            const sourceItemPaths = fileOperations.buildPathsFromKeys(sourceItemKeys);
+            const targetPath = fileOperations.getPathForCurrentFolderChild(targetItem.name);
+            fileOperations.handleMove(sourceItemPaths, targetPath);
         },
     });
 
-    // ============ Navigation Handlers ============
-    const handleRefresh = () => {
-        // TODO: implement refresh logic once backend is wired.
-    };
-
-    // ============ File Operation Handlers ============
-    const handleDownload = (itemKeys: string[]) => {
-        // TODO: wire to backend download endpoint when file selection is implemented.
-        void itemKeys;
-    };
-
-    const handleUpload = () => {
-        // TODO: wire to upload flow when file selection/target directory is implemented.
-    };
-
-    const handleDelete = (itemKeys: string[]) => {
-        // TODO: implement delete logic once backend is wired.
-        void itemKeys;
-    };
-
-    const handleCopy = (itemKeys: string[]) => {
-        // TODO: implement copy logic once backend is wired.
-        void itemKeys;
-    }
-
-    const handleMove = (sourceItemPaths: string[], targetPath: string) => {
-        // TODO: implement move logic once backend is wired.
-        void sourceItemPaths;
-        void targetPath;
-
-        console.log('Moving items', sourceItemPaths, 'to', targetPath);
-    };
-
-    const handleRename = (itemKey: string) => {
-        // TODO: implement rename logic once backend is wired.
-        void itemKey;
-    };
-
-    // ============ Item Menu Handlers ============
-    const handleItemMenuAction = (action: ItemMenuAction, itemKey: string) => {
-        fileSelection.menu.setOpenItemMenuKey(null);
-
-        switch (action) {
-            case 'rename':
-                handleRename(itemKey);
-                break;
-            case 'download':
-                handleDownload([itemKey]);
-                break;
-            case 'delete':
-                handleDelete([itemKey]);
-                break;
-            default:
-                break;
-        }
-    };
+    useExplorerShortcuts({
+        selectedItemKeys: fileSelection.items.selectedItemKeys,
+        selectedCount: fileSelection.items.selectedCount,
+        onSelectAll: () => fileSelection.selectAll.handleSelectAllChange(true),
+        onCopy: fileOperations.handleCopy,
+        onPaste: fileOperations.handlePaste,
+    });
 
     // Render
     return (
@@ -137,14 +88,15 @@ const FileExplorer: React.FC = () => {
                 pathHandlers={pathNavigation.handlers}
                 selection={fileSelection.items}
                 selectAll={fileSelection.selectAll}
-                selectionHandlers={fileSelection.handlers}
                 breadcrumbsRef={breadcrumbsRef}
-                showScrollHint={showScrollHint}
-                onRefresh={handleRefresh}
-                onUpload={handleUpload}
-                onDelete={handleDelete}
-                onDownload={handleDownload}
-                onCopy={handleCopy}
+                showScrollHintLeft={showScrollHintLeft}
+                showScrollHintRight={showScrollHintRight}
+                onRefresh={fileOperations.handleRefresh}
+                onUpload={fileOperations.handleUpload}
+                onDelete={fileOperations.handleDelete}
+                onDownload={fileOperations.handleDownload}
+                onCopy={fileOperations.handleCopy}
+                onPaste={fileOperations.handlePaste}
                 dragContext={dragAndDrop.context}
                 breadcrumbDragHandlers={dragAndDrop.breadcrumb}
             />
@@ -158,7 +110,7 @@ const FileExplorer: React.FC = () => {
                 onTileContextMenu={fileSelection.handlers.handleItemContextMenu}
                 onCheckboxChange={fileSelection.handlers.handleItemCheckboxChange}
                 onMenuToggle={fileSelection.handlers.handleItemMenuToggle}
-                onMenuAction={handleItemMenuAction}
+                onMenuAction={fileOperations.handleItemMenuAction}
                 onBlankAreaClick={fileSelection.handlers.handleBlankAreaClick}
                 onItemDragStart={dragAndDrop.item.handleDragStart}
                 onItemDragOver={dragAndDrop.item.handleDragOver}

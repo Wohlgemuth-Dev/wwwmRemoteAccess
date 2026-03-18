@@ -1,8 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FileItem, PathSegment } from './types';
 
+const normalizePathSeparators = (value: string) => value.replace(/\//g, '\\').replace(/\\{2,}/g, '\\');
+
+const trimTrailingSeparators = (value: string) => value.replace(/[\\/]+$/, '');
+
+const joinPathSegment = (basePath: string, childName: string) => {
+    const normalizedBasePath = trimTrailingSeparators(normalizePathSeparators(basePath));
+    return `${normalizedBasePath}\\${childName}`;
+};
+
 const buildPathSegments = (path: string): PathSegment[] => {
-    const normalizedPath = path.replace(/\/+|\\+/g, '\\');
+    const normalizedPath = normalizePathSeparators(path);
     const driveMatch = normalizedPath.match(/^[A-Za-z]:/);
     const drive = driveMatch ? driveMatch[0] : '';
 
@@ -30,8 +39,7 @@ const normalizePathInput = (value: string, fallbackPath: string) => {
         return fallbackPath;
     }
 
-    const withBackslashes = trimmed.replace(/\//g, '\\');
-    return withBackslashes.replace(/\\{2,}/g, '\\');
+    return normalizePathSeparators(trimmed);
 };
 
 export const usePathNavigation = (initialPath: string, fallbackFolder: string) => {
@@ -84,9 +92,7 @@ export const usePathNavigation = (initialPath: string, fallbackFolder: string) =
         }
 
         setCurrentPath((prevPath) => {
-            const sanitizedBase = prevPath.replace(/[\\/]+$/, '');
-            const separator = sanitizedBase.includes('\\') ? '\\' : '/';
-            return `${sanitizedBase}${separator}${item.name}`;
+            return joinPathSegment(prevPath, item.name);
         });
     };
 

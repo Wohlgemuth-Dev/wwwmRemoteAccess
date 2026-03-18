@@ -259,7 +259,7 @@
     align-items: center;
     flex: 1;
     position: relative;
-    min-width: 10rem;
+    min-width: 6rem;
     height: var(--control-height);
     box-sizing: border-box;
     padding: 0 0.55rem;
@@ -280,7 +280,6 @@
     overflow-x: auto;
     overflow-y: hidden;
     white-space: nowrap;
-    padding-right: 1.25rem;
     scrollbar-width: none;
 }
 
@@ -338,18 +337,31 @@
 
 .path-scroll-hint {
     position: absolute;
-    right: 0;
     top: 0;
     bottom: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
     padding: 0 0.45rem 0 0.6rem;
     color: rgba(255, 255, 255, 0.8);
     pointer-events: none;
+}
+
+.path-scroll-hint-right {
+    right: 0;
+    justify-content: flex-end;
+    padding-right: 0.22rem;
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
     background: linear-gradient(90deg, rgba(20, 20, 25, 0), rgba(20, 20, 25, 0.95) 45%, rgba(20, 20, 25, 0.95) 100%);
+}
+
+.path-scroll-hint-left {
+    left: 0;
+    justify-content: flex-start;
+    padding-left: 0.22rem;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    background: linear-gradient(270deg, rgba(20, 20, 25, 0), rgba(20, 20, 25, 0.95) 45%, rgba(20, 20, 25, 0.95) 100%);
 }
 
 .path-input {
@@ -370,7 +382,7 @@
 .search-input {
     height: var(--control-height);
     flex: 1;
-    min-width: 4rem;
+    min-width: 3rem;
     max-width: 10rem;
     padding: 0 0.65rem;
     border: 1px solid var(--border-soft);
@@ -396,6 +408,7 @@
 .nav-button,
 .nav-checkbox-button,
 .nav-copy-button,
+.nav-paste-button,
 .nav-delete-button,
 .nav-download-button,
 .nav-upload-button {
@@ -439,12 +452,13 @@
 
 .nav-upload-button::before,
 .nav-checkbox-button::before {
-    left: -0.35rem;
+    left: -0.39rem;
 }
 
 .nav-button:hover,
 .nav-checkbox-button:hover,
 .nav-copy-button:hover,
+.nav-paste-button:hover,
 .nav-delete-button:hover,
 .nav-download-button:hover,
 .nav-upload-button:hover {
@@ -472,6 +486,7 @@
 }
 
 .nav-copy-button:focus-visible,
+.nav-paste-button:focus-visible,
 .nav-delete-button:focus-visible,
 .nav-download-button:focus-visible,
 .nav-upload-button:focus-visible {
@@ -482,6 +497,7 @@
 @media (max-width: 980px) {
     .nav-checkbox-label,
     .nav-copy-label,
+    .nav-paste-label,
     .nav-delete-label,
     .nav-download-label,
     .nav-upload-label {
@@ -490,6 +506,7 @@
 
     .nav-checkbox-button,
     .nav-copy-button,
+    .nav-paste-button,
     .nav-delete-button,
     .nav-download-button,
     .nav-upload-button {

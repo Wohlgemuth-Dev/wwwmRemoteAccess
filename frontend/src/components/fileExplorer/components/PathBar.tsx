@@ -11,7 +11,8 @@ interface PathBarProps {
     onPathInputKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
     pathInputRef: React.RefObject<HTMLInputElement | null>;
     breadcrumbsRef: React.RefObject<HTMLDivElement | null>;
-    showScrollHint: boolean;
+    showScrollHintLeft: boolean;
+    showScrollHintRight: boolean;
     canNavigateUp: boolean;
     onNavigateUp: () => void;
     onRefresh: () => void;
@@ -32,7 +33,8 @@ export const PathBar: React.FC<PathBarProps> = ({
     onPathInputKeyDown,
     pathInputRef,
     breadcrumbsRef,
-    showScrollHint,
+    showScrollHintLeft,
+    showScrollHintRight,
     canNavigateUp,
     onNavigateUp,
     onRefresh,
@@ -88,8 +90,13 @@ export const PathBar: React.FC<PathBarProps> = ({
                         ))}
                     </div>
                 )}
-                {!isEditingPath && showScrollHint && (
-                    <span className="path-scroll-hint">
+                {!isEditingPath && showScrollHintLeft && (
+                    <span className="path-scroll-hint path-scroll-hint-left">
+                        <span className="path-chevron">&lt;</span>
+                    </span>
+                )}
+                {!isEditingPath && showScrollHintRight && (
+                    <span className="path-scroll-hint path-scroll-hint-right">
                         <span className="path-chevron">&gt;</span>
                     </span>
                 )}

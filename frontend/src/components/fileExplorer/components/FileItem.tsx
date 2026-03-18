@@ -81,6 +81,9 @@ export const FileItem: React.FC<FileItemProps> = ({
                     <button type="button" className="file-item-menu-item" onClick={() => onMenuAction('delete')}>
                         Delete
                     </button>
+                    <button type="button" className="file-item-menu-item" onClick={() => onMenuAction('copy')}>
+                        Copy
+                    </button>
                 </div>
             )}
             <span className="file-icon">{item.type === 'folder' ? '📁' : '📄'}</span>
