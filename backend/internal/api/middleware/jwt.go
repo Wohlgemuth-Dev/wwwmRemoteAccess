@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"encoding/base64"
-	"fmt"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"

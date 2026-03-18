@@ -15,6 +15,8 @@ const Console: React.FC = () => {
         { id: 1, text: 'Connecting to server...', type: 'output' },
     ]);
     const [inputValue, setInputValue] = useState('');
+    const [commandHistory, setCommandHistory] = useState<string[]>([]);
+    const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const lastLineRef = useRef<HTMLDivElement>(null);
     const wsRef = useRef<WebSocket | null>(null);
 
@@ -60,17 +62,42 @@ const Console: React.FC = () => {
         }
     }, [lines]);
 
-    //Handles command posting
+    //Handles command posting and history navigation
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             const command = inputValue.trim();
             addCommand(command);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                const nextIndex = historyIndex < 0 ? commandHistory.length - 1 : Math.max(0, historyIndex - 1);
+                setHistoryIndex(nextIndex);
+                setInputValue(commandHistory[nextIndex]);
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex >= 0) {
+                const nextIndex = historyIndex + 1;
+                if (nextIndex >= commandHistory.length) {
+                    setHistoryIndex(-1);
+                    setInputValue('');
+                } else {
+                    setHistoryIndex(nextIndex);
+                    setInputValue(commandHistory[nextIndex]);
+                }
+            }
         }
     };
 
     //Function that calls the console commands
     const addCommand = (command: string) => {
         if (!command) return;
+
+        setCommandHistory((prev) => {
+            if (prev[prev.length - 1] === command) return prev;
+            return [...prev, command];
+        });
+        setHistoryIndex(-1);
 
         const newLineId = Date.now();
         setLines((prev) => [...prev, { id: newLineId, text: `> ${command}`, type: 'input' }]);
