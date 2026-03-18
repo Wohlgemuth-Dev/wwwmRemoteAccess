@@ -50,6 +50,7 @@ interface FileExplorerNavBarProps {
     onUpload: () => void;
     onDelete: (keys: string[]) => void;
     onDownload: (keys: string[]) => void;
+    onCopy: (keys: string[]) => void;
     dragContext: DragContext;
     breadcrumbDragHandlers: {
         handleDragOver: (e: React.DragEvent<HTMLButtonElement>) => void;
@@ -71,6 +72,7 @@ export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
     onUpload,
     onDelete,
     onDownload,
+    onCopy,
     dragContext,
     breadcrumbDragHandlers,
 }) => {
@@ -104,6 +106,7 @@ export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
                 selectedItemKeys={selection.selectedItemKeys}
                 onDelete={onDelete}
                 onDownload={onDownload}
+                onCopy={onCopy}
             />
             <button type="button" className="nav-upload-button" onClick={onUpload} title="Upload files">
                 <span className="nav-upload-icon">⇧</span>

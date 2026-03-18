@@ -8,6 +8,7 @@ interface SelectionBarProps {
     selectedItemKeys: string[];
     onDelete: (keys: string[]) => void;
     onDownload: (keys: string[]) => void;
+    onCopy: (keys: string[]) => void;
 }
 
 export const SelectionBar: React.FC<SelectionBarProps> = ({
@@ -17,6 +18,7 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
     selectedCount,
     selectedItemKeys,
     onDelete,
+    onCopy,
     onDownload,
 }) => {
     return (
@@ -41,6 +43,17 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
             >
                 <span className="nav-delete-icon">🗑</span>
                 <span className="nav-delete-label">Delete</span>
+            </button>
+
+            <button
+                type="button"
+                className="nav-copy-button"
+                onClick={() => onCopy(selectedItemKeys)}
+                disabled={selectedCount === 0}
+                title={selectedCount === 0 ? 'Select items to copy' : `Copy ${selectedCount} item(s)`}
+            >
+                <span className="nav-copy-icon">📋</span>
+                <span className="nav-copy-label">Copy</span>
             </button>
 
             <button

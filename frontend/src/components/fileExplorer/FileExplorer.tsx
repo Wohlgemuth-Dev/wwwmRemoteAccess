@@ -13,6 +13,17 @@ import { DEFAULT_PATH, FALLBACK_FOLDER, MOCK_FOLDER_CONTENTS } from './constants
 // Pure helpers
 const getItemKey = (item: FileItem) => `${item.type}:${item.name}`;
 
+const getItemNameFromKey = (itemKey: string) => {
+    const separatorIndex = itemKey.indexOf(':');
+    return separatorIndex >= 0 ? itemKey.slice(separatorIndex + 1) : itemKey;
+};
+
+const buildChildPath = (basePath: string, childName: string) => {
+    const sanitizedBase = basePath.replace(/[\\/]+$/, '');
+    const separator = sanitizedBase.includes('\\') ? '\\' : '/';
+    return `${sanitizedBase}${separator}${childName}`;
+};
+
 const sortFolderContents = (items: FileItem[]) => {
     return [...items].sort((a, b) => {
         if (a.type !== b.type) {
@@ -40,6 +51,8 @@ const FileExplorer: React.FC = () => {
     // Selection Management
     const fileSelection = useFileSelection(allItemKeys);
 
+    const currentPath = pathNavigation.path.currentPath;
+
     // Scroll hint
     const { showScrollHint } = useScrollHint(breadcrumbsRef, pathNavigation.editing.isEditingPath, pathNavigation.path.currentPath);
 
@@ -47,14 +60,13 @@ const FileExplorer: React.FC = () => {
     const dragAndDrop = useDragAndDrop({
         getItemKey,
         onDropToPath: (sourceItemKeys, segmentPath) => {
-            // TODO: wire move behavior to backend (move items to segmentPath).
-            void sourceItemKeys;
-            void segmentPath;
+            const sourceItemPaths = sourceItemKeys.map((itemKey) => buildChildPath(currentPath, getItemNameFromKey(itemKey)));
+            handleMove(sourceItemPaths, segmentPath);
         },
         onDropToFolder: (sourceItemKeys, targetItem) => {
-            // TODO: wire move behavior to backend (move items to target folder).
-            void sourceItemKeys;
-            void targetItem;
+            const sourceItemPaths = sourceItemKeys.map((itemKey) => buildChildPath(currentPath, getItemNameFromKey(itemKey)));
+            const targetPath = buildChildPath(currentPath, targetItem.name);
+            handleMove(sourceItemPaths, targetPath);
         },
     });
 
@@ -76,6 +88,19 @@ const FileExplorer: React.FC = () => {
     const handleDelete = (itemKeys: string[]) => {
         // TODO: implement delete logic once backend is wired.
         void itemKeys;
+    };
+
+    const handleCopy = (itemKeys: string[]) => {
+        // TODO: implement copy logic once backend is wired.
+        void itemKeys;
+    }
+
+    const handleMove = (sourceItemPaths: string[], targetPath: string) => {
+        // TODO: implement move logic once backend is wired.
+        void sourceItemPaths;
+        void targetPath;
+
+        console.log('Moving items', sourceItemPaths, 'to', targetPath);
     };
 
     const handleRename = (itemKey: string) => {
@@ -119,6 +144,7 @@ const FileExplorer: React.FC = () => {
                 onUpload={handleUpload}
                 onDelete={handleDelete}
                 onDownload={handleDownload}
+                onCopy={handleCopy}
                 dragContext={dragAndDrop.context}
                 breadcrumbDragHandlers={dragAndDrop.breadcrumb}
             />

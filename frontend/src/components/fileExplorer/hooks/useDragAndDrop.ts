@@ -71,7 +71,6 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
         clearDragContext();
 
         if (sourceItemKeys.length === 0 || !segmentPath) return;
-
         onDropToPath(sourceItemKeys, segmentPath);
     };
 

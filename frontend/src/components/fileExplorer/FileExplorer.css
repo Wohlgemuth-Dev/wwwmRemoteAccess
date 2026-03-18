@@ -395,6 +395,7 @@
 
 .nav-button,
 .nav-checkbox-button,
+.nav-copy-button,
 .nav-delete-button,
 .nav-download-button,
 .nav-upload-button {
@@ -443,6 +444,7 @@
 
 .nav-button:hover,
 .nav-checkbox-button:hover,
+.nav-copy-button:hover,
 .nav-delete-button:hover,
 .nav-download-button:hover,
 .nav-upload-button:hover {
@@ -451,6 +453,7 @@
 }
 
 .nav-button:disabled,
+.nav-copy-button:disabled,
 .nav-delete-button:disabled,
 .nav-download-button:disabled
  {
@@ -467,6 +470,8 @@
 .nav-checkbox {
     background: rgba(255, 255, 255, 0.02);
 }
+
+.nav-copy-button:focus-visible,
 .nav-delete-button:focus-visible,
 .nav-download-button:focus-visible,
 .nav-upload-button:focus-visible {
@@ -476,6 +481,7 @@
 
 @media (max-width: 980px) {
     .nav-checkbox-label,
+    .nav-copy-label,
     .nav-delete-label,
     .nav-download-label,
     .nav-upload-label {
@@ -483,6 +489,7 @@
     }
 
     .nav-checkbox-button,
+    .nav-copy-button,
     .nav-delete-button,
     .nav-download-button,
     .nav-upload-button {
