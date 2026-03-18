@@ -335,11 +335,7 @@ const FileExplorer: React.FC = () => {
                     />
                     <span className="nav-checkbox-label">Select All</span>
                 </label>
-                <button
-                    type="button"
-                    className="nav-download-button"
-                    onClick={() => handleDownload(selectedItemKeys)}
-                >
+                <button type="button" className="nav-download-button" onClick={() => handleDownload(selectedItemKeys)}>
                     <span className="nav-download-icon">⇩</span>
                     <span className="nav-download-label">Download</span>
                 </button>
