@@ -2,38 +2,43 @@ import React from 'react';
 import type { DragContext, FileItem as FileItemType, ItemMenuAction } from '../hooks';
 import { FileItem } from './FileItem';
 
-const getItemKey = (item: FileItemType) => `${item.type}:${item.name}`;
+const getItemKey = (item: FileItemType) => item.fullPath;
+
+type MenuPosition = {
+    x: number;
+    y: number;
+};
 
 interface FileGridProps {
     items: FileItemType[];
-    selectedItemKeys: string[];
-    openItemMenuKey: string | null;
+    selectedItemPaths: string[];
+    openItemMenuPath: string | null;
+    openItemMenuPosition: MenuPosition | null;
     dragContext: DragContext;
-    onTileClick: (itemKey: string) => void;
+    onTileClick: (itemPath: string) => void;
     onTileDoubleClick: (item: FileItemType) => void;
-    onTileContextMenu: (itemKey: string) => (e: React.MouseEvent<HTMLDivElement>) => void;
-    onCheckboxChange: (itemKey: string, checked: boolean) => void;
-    onMenuToggle: (itemKey: string) => void;
-    onMenuAction: (action: ItemMenuAction, itemKey: string) => void;
+    onTileContextMenu: (itemPath: string) => (e: React.MouseEvent<HTMLDivElement>) => void;
+    onCheckboxChange: (itemPath: string, checked: boolean) => void;
+    onMenuAction: (action: ItemMenuAction, itemPaths: string[]) => void;
     onBlankAreaClick: (e: React.MouseEvent<HTMLDivElement>) => void;
-    onItemDragStart: (itemKey: string, selectedKeys: string[]) => (e: React.DragEvent<HTMLDivElement>) => void;
+    onItemDragStart: (itemPath: string, selectedPaths: string[]) => (e: React.DragEvent<HTMLDivElement>) => void;
     onItemDragOver: (item: FileItemType) => (e: React.DragEvent<HTMLDivElement>) => void;
-    onItemDragLeave: (itemKey: string) => (e: React.DragEvent<HTMLDivElement>) => void;
+    onItemDragLeave: (itemPath: string) => (e: React.DragEvent<HTMLDivElement>) => void;
     onItemDrop: (item: FileItemType) => (e: React.DragEvent<HTMLDivElement>) => void;
     onItemDragEnd: () => void;
-    isItemSelected: (itemKey: string) => boolean;
+    isItemSelected: (itemPath: string) => boolean;
 }
 
 export const FileGrid: React.FC<FileGridProps> = ({
     items,
-    selectedItemKeys,
-    openItemMenuKey,
+    selectedItemPaths,
+    openItemMenuPath,
+    openItemMenuPosition,
     dragContext,
     onTileClick,
     onTileDoubleClick,
     onTileContextMenu,
     onCheckboxChange,
-    onMenuToggle,
     onMenuAction,
     onBlankAreaClick,
     onItemDragStart,
@@ -43,39 +48,70 @@ export const FileGrid: React.FC<FileGridProps> = ({
     onItemDragEnd,
     isItemSelected,
 }) => {
+    const menuTargetPaths =
+        selectedItemPaths.length > 0
+            ? selectedItemPaths
+            : openItemMenuPath
+              ? [openItemMenuPath]
+              : [];
+    const isRenameDisabled = menuTargetPaths.length !== 1;
+
     return (
         <div className="file-explorer-content" onClick={onBlankAreaClick}>
             <div className="file-list" onClick={onBlankAreaClick}>
                 {items.map((item) => {
-                    const itemKey = getItemKey(item);
-                    const selected = isItemSelected(itemKey);
-                    const isItemMenuOpen = openItemMenuKey === itemKey;
-                    const isItemDropTarget = item.type === 'folder' && dragContext.dropTargetType === 'item' && dragContext.dropTargetId === itemKey;
-                    const isItemDragging = dragContext.draggedItemKeys.includes(itemKey);
+                    const itemPath = getItemKey(item);
+                    const selected = isItemSelected(itemPath);
+                    const isItemDropTarget = item.type === 'folder' && dragContext.dropTargetType === 'item' && dragContext.dropTargetId === itemPath;
+                    const isItemDragging = dragContext.draggedItemPaths.includes(itemPath);
 
                     return (
                         <FileItem
-                            key={itemKey}
+                            key={itemPath}
                             item={item}
                             selected={selected}
-                            isMenuOpen={isItemMenuOpen}
                             isDropTarget={isItemDropTarget}
                             isDragging={isItemDragging}
-                            onTileClick={() => onTileClick(itemKey)}
+                            onTileClick={() => onTileClick(itemPath)}
                             onTileDoubleClick={() => onTileDoubleClick(item)}
-                            onContextMenu={onTileContextMenu(itemKey)}
-                            onCheckboxChange={(checked) => onCheckboxChange(itemKey, checked)}
-                            onMenuToggle={() => onMenuToggle(itemKey)}
-                            onMenuAction={(action) => onMenuAction(action, itemKey)}
-                            onDragStart={onItemDragStart(itemKey, selectedItemKeys)}
+                            onContextMenu={onTileContextMenu(itemPath)}
+                            onCheckboxChange={(checked) => onCheckboxChange(itemPath, checked)}
+                            onDragStart={onItemDragStart(itemPath, selectedItemPaths)}
                             onDragOver={onItemDragOver(item)}
-                            onDragLeave={onItemDragLeave(itemKey)}
+                            onDragLeave={onItemDragLeave(itemPath)}
                             onDrop={onItemDrop(item)}
                             onDragEnd={onItemDragEnd}
                         />
                     );
                 })}
             </div>
+            {openItemMenuPath && openItemMenuPosition && (
+                <div
+                    className="file-item-menu"
+                    role="menu"
+                    style={{ left: `${openItemMenuPosition.x}px`, top: `${openItemMenuPosition.y}px` }}
+                    onClick={(e) => e.stopPropagation()}
+                    onContextMenu={(e) => e.preventDefault()}
+                >
+                    <button
+                        type="button"
+                        className="file-item-menu-item"
+                        disabled={isRenameDisabled}
+                        onClick={() => onMenuAction('rename', menuTargetPaths)}
+                    >
+                        Rename
+                    </button>
+                    <button type="button" className="file-item-menu-item" onClick={() => onMenuAction('download', menuTargetPaths)}>
+                        Download
+                    </button>
+                    <button type="button" className="file-item-menu-item" onClick={() => onMenuAction('delete', menuTargetPaths)}>
+                        Delete
+                    </button>
+                    <button type="button" className="file-item-menu-item" onClick={() => onMenuAction('copy', menuTargetPaths)}>
+                        Copy
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

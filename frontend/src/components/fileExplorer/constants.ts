@@ -3,7 +3,9 @@ import type { FileItem } from './hooks';
 export const DEFAULT_PATH = 'C:\\Users\\Lukas\\Documents';
 export const FALLBACK_FOLDER = 'Folder';
 
-export const MOCK_FOLDER_CONTENTS: FileItem[] = [
+type MockFileItem = Omit<FileItem, 'fullPath'>;
+
+export const MOCK_FOLDER_CONTENTS: MockFileItem[] = [
     { name: 'File1.txt', type: 'file' },
     { name: 'File2.txt', type: 'file' },
     { name: 'Subfolder', type: 'folder' },

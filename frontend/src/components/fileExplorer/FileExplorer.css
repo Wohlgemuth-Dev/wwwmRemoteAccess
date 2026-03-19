@@ -146,37 +146,8 @@
     background: rgba(8, 8, 10, 0.45);
 }
 
-.file-item-menu-trigger {
-    position: absolute;
-    top: 0.34rem;
-    right: 0.34rem;
-    width: 1.65rem;
-    height: 1.65rem;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 6px;
-    background: rgba(8, 8, 10, 0.45);
-    color: rgba(255, 255, 255, 0.82);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.18s ease;
-    z-index: 6;
-    padding: 0;
-}
-
-.file-item-menu-trigger:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.28);
-    color: #fff;
-}
-
 .file-item-menu {
-    position: absolute;
-    top: 2.2rem;
-    right: 0rem;
+    position: fixed;
     min-width: 7rem;
     padding: 0.25rem;
     border: 1px solid rgba(255, 255, 255, 0.18);
@@ -185,7 +156,19 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-    z-index: 5;
+    z-index: 120;
+    animation: menu-enter 120ms ease-out;
+}
+
+@keyframes menu-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-3px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .file-item-menu-item {
@@ -203,6 +186,15 @@
 
 .file-item-menu-item:hover {
     background: rgba(255, 255, 255, 0.08);
+}
+
+.file-item-menu-item:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.file-item-menu-item:disabled:hover {
+    background: transparent;
 }
 
 .file-item:hover {

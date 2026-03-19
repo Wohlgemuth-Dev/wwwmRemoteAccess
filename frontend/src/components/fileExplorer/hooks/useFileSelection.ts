@@ -1,13 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-export const useFileSelection = (allItemKeys: string[]) => {
-    const [selectedItemKeys, setSelectedItemKeys] = useState<string[]>([]);
-    const [openItemMenuKey, setOpenItemMenuKey] = useState<string | null>(null);
+type MenuPosition = {
+    x: number;
+    y: number;
+};
+
+export const useFileSelection = (allItemPaths: string[]) => {
+    const [selectedItemPaths, setSelectedItemPaths] = useState<string[]>([]);
+    const [openItemMenuPath, setOpenItemMenuPath] = useState<string | null>(null);
+    const [openItemMenuPosition, setOpenItemMenuPosition] = useState<MenuPosition | null>(null);
     const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
 
-    const selectedItemKeySet = useMemo(() => new Set(selectedItemKeys), [selectedItemKeys]);
-    const selectedCount = selectedItemKeys.length;
-    const totalCount = allItemKeys.length;
+    const selectedItemPathSet = useMemo(() => new Set(selectedItemPaths), [selectedItemPaths]);
+    const selectedCount = selectedItemPaths.length;
+    const totalCount = allItemPaths.length;
     const isSelectAllChecked = totalCount > 0 && selectedCount === totalCount;
     const isSelectAllIndeterminate = selectedCount > 0 && selectedCount < totalCount;
 
@@ -18,75 +24,86 @@ export const useFileSelection = (allItemKeys: string[]) => {
     }, [isSelectAllIndeterminate]);
 
     const handleSelectAllChange = (checked: boolean) => {
-        setSelectedItemKeys(checked ? allItemKeys : []);
+        setSelectedItemPaths(checked ? allItemPaths : []);
     };
 
-    const updateItemSelection = (itemKey: string, shouldSelect: boolean) => {
-        setSelectedItemKeys((prev) => {
+    const updateItemSelection = (itemPath: string, shouldSelect: boolean) => {
+        setSelectedItemPaths((prev) => {
             if (shouldSelect) {
-                if (prev.includes(itemKey)) {
+                if (prev.includes(itemPath)) {
                     return prev;
                 }
 
-                return [...prev, itemKey];
+                return [...prev, itemPath];
             }
 
-            return prev.filter((key) => key !== itemKey);
+            return prev.filter((path) => path !== itemPath);
         });
     };
 
-    const handleItemCheckboxChange = (itemKey: string, checked: boolean) => {
-        updateItemSelection(itemKey, checked);
+    const handleItemCheckboxChange = (itemPath: string, checked: boolean) => {
+        updateItemSelection(itemPath, checked);
     };
 
-    const handleTileSelectionToggle = (itemKey: string) => {
-        setOpenItemMenuKey(null);
-        setSelectedItemKeys((prev) => {
-            if (prev.includes(itemKey)) {
-                return prev.filter((entry) => entry !== itemKey);
+    const handleTileSelectionToggle = (itemPath: string) => {
+        setOpenItemMenuPath(null);
+        setOpenItemMenuPosition(null);
+        setSelectedItemPaths((prev) => {
+            if (prev.includes(itemPath)) {
+                return prev.filter((entry) => entry !== itemPath);
             }
-            return [...prev, itemKey];
+            return [...prev, itemPath];
         });
     };
 
     const clearSelection = () => {
-        if (selectedItemKeys.length === 0) {
+        if (selectedItemPaths.length === 0) {
             return;
         }
 
-        setSelectedItemKeys([]);
+        setSelectedItemPaths([]);
     };
 
     const handleBlankAreaClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target === e.currentTarget) {
-            setOpenItemMenuKey(null);
+            setOpenItemMenuPath(null);
+            setOpenItemMenuPosition(null);
             clearSelection();
         }
     };
 
-    const handleItemMenuToggle = (itemKey: string) => {
-        setOpenItemMenuKey((prev) => (prev === itemKey ? null : itemKey));
-    };
+    const handleItemContextMenu = (itemPath: string) => (e: React.MouseEvent<HTMLDivElement>) => {
+        const menuOffset = 6;
+        const menuWidth = 132;
+        const menuHeight = 152;
+        const maxX = Math.max(8, window.innerWidth - menuWidth - 8);
+        const maxY = Math.max(8, window.innerHeight - menuHeight - 8);
+        const x = Math.min(maxX, e.clientX + menuOffset);
+        const y = Math.min(maxY, e.clientY + menuOffset);
 
-    const handleItemContextMenu = (itemKey: string) => (e: React.MouseEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
-        setOpenItemMenuKey(itemKey);
+
+        setSelectedItemPaths((prev) => (prev.includes(itemPath) ? prev : [itemPath]));
+        setOpenItemMenuPath(itemPath);
+        setOpenItemMenuPosition({ x, y });
     };
 
-    const isItemSelected = (itemKey: string) => selectedItemKeySet.has(itemKey);
+    const isItemSelected = (itemPath: string) => selectedItemPathSet.has(itemPath);
 
     return {
         // State
         items: {
-            selectedItemKeys,
+            selectedItemPaths,
             selectedCount,
             totalCount,
         },
         // UI state
         menu: {
-            openItemMenuKey,
-            setOpenItemMenuKey,
+            openItemMenuPath,
+            openItemMenuPosition,
+            setOpenItemMenuPath,
+            setOpenItemMenuPosition,
         },
         // Checkboxes
         selectAll: {
@@ -101,7 +118,6 @@ export const useFileSelection = (allItemKeys: string[]) => {
             handleItemCheckboxChange,
             handleTileSelectionToggle,
             handleBlankAreaClick,
-            handleItemMenuToggle,
             handleItemContextMenu,
         },
         // Utilities

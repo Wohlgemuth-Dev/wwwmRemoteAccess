@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 
 interface UseExplorerShortcutsParams {
-    selectedItemKeys: string[];
+    selectedItemPaths: string[];
     selectedCount: number;
     onSelectAll: () => void;
-    onCopy: (keys: string[]) => void;
+    onCopy: (paths: string[]) => void;
     onPaste: () => void;
 }
 
@@ -19,14 +19,14 @@ const isTypingIntoEditableElement = () => {
 };
 
 export const useExplorerShortcuts = ({
-    selectedItemKeys,
+    selectedItemPaths,
     selectedCount,
     onSelectAll,
     onCopy,
     onPaste,
 }: UseExplorerShortcutsParams) => {
     const latestStateRef = useRef({
-        selectedItemKeys,
+        selectedItemPaths,
         selectedCount,
         onSelectAll,
         onCopy,
@@ -35,13 +35,13 @@ export const useExplorerShortcuts = ({
 
     useEffect(() => {
         latestStateRef.current = {
-            selectedItemKeys,
+            selectedItemPaths,
             selectedCount,
             onSelectAll,
             onCopy,
             onPaste,
         };
-    }, [selectedItemKeys, selectedCount, onSelectAll, onCopy, onPaste]);
+    }, [selectedItemPaths, selectedCount, onSelectAll, onCopy, onPaste]);
 
     useEffect(() => {
         const handleShortcuts = (e: KeyboardEvent) => {
@@ -49,7 +49,7 @@ export const useExplorerShortcuts = ({
                 return;
             }
 
-            const { selectedItemKeys, selectedCount, onSelectAll, onCopy, onPaste } = latestStateRef.current;
+            const { selectedItemPaths, selectedCount, onSelectAll, onCopy, onPaste } = latestStateRef.current;
 
             const key = e.key.toLowerCase();
             if (key === 'a') {
@@ -64,7 +64,7 @@ export const useExplorerShortcuts = ({
                 }
 
                 e.preventDefault();
-                onCopy(selectedItemKeys);
+                onCopy(selectedItemPaths);
                 return;
             }
 

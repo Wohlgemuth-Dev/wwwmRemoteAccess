@@ -13,9 +13,17 @@ import { FileExplorerNavBar, FileGrid } from './components';
 import { DEFAULT_PATH, FALLBACK_FOLDER, MOCK_FOLDER_CONTENTS } from './constants';
 
 // Pure helpers
-const getItemKey = (item: FileItem) => `${item.type}:${item.name}`;
+const normalizePathSeparators = (value: string) => value.replace(/\//g, '\\').replace(/\\{2,}/g, '\\');
+const trimTrailingSeparators = (value: string) => value.replace(/[\\/]+$/, '');
+const joinPathSegment = (basePath: string, childName: string) => {
+    const normalizedBasePath = trimTrailingSeparators(normalizePathSeparators(basePath));
+    return `${normalizedBasePath}\\${childName}`;
+};
+const getItemKey = (item: FileItem) => item.fullPath;
 
-const sortFolderContents = (items: FileItem[]) => {
+type SortableFileItem = Pick<FileItem, 'name' | 'type'>;
+
+const sortFolderContents = <T extends SortableFileItem>(items: T[]) => {
     return [...items].sort((a, b) => {
         if (a.type !== b.type) {
             return a.type === 'folder' ? -1 : 1;
@@ -37,16 +45,23 @@ const FileExplorer: React.FC = () => {
 
     // Folder contents
     const sortedFolderContents = useMemo(() => sortFolderContents(MOCK_FOLDER_CONTENTS), []);
-    const allItemKeys = useMemo(() => sortedFolderContents.map(getItemKey), [sortedFolderContents]);
+    const folderContents = useMemo(
+        () => sortedFolderContents.map((item) => ({ ...item, fullPath: joinPathSegment(pathNavigation.path.currentPath, item.name) })),
+        [sortedFolderContents, pathNavigation.path.currentPath],
+    );
+    const allItemPaths = useMemo(() => folderContents.map(getItemKey), [folderContents]);
 
     // Selection Management
-    const fileSelection = useFileSelection(allItemKeys);
+    const fileSelection = useFileSelection(allItemPaths);
 
     const currentPath = pathNavigation.path.currentPath;
 
     const fileOperations = useFileOperations({
         currentPath,
-        closeItemMenu: () => fileSelection.menu.setOpenItemMenuKey(null),
+        closeItemMenu: () => {
+            fileSelection.menu.setOpenItemMenuPath(null);
+            fileSelection.menu.setOpenItemMenuPosition(null);
+        },
     });
 
     // Scroll hint
@@ -59,19 +74,16 @@ const FileExplorer: React.FC = () => {
     // Drag & Drop
     const dragAndDrop = useDragAndDrop({
         getItemKey,
-        onDropToPath: (sourceItemKeys, segmentPath) => {
-            const sourceItemPaths = fileOperations.buildPathsFromKeys(sourceItemKeys);
+        onDropToPath: (sourceItemPaths, segmentPath) => {
             fileOperations.handleMove(sourceItemPaths, segmentPath);
         },
-        onDropToFolder: (sourceItemKeys, targetItem) => {
-            const sourceItemPaths = fileOperations.buildPathsFromKeys(sourceItemKeys);
-            const targetPath = fileOperations.getPathForCurrentFolderChild(targetItem.name);
-            fileOperations.handleMove(sourceItemPaths, targetPath);
+        onDropToFolder: (sourceItemPaths, targetItem) => {
+            fileOperations.handleMove(sourceItemPaths, targetItem.fullPath);
         },
     });
 
     useExplorerShortcuts({
-        selectedItemKeys: fileSelection.items.selectedItemKeys,
+        selectedItemPaths: fileSelection.items.selectedItemPaths,
         selectedCount: fileSelection.items.selectedCount,
         onSelectAll: () => fileSelection.selectAll.handleSelectAllChange(true),
         onCopy: fileOperations.handleCopy,
@@ -101,15 +113,15 @@ const FileExplorer: React.FC = () => {
                 breadcrumbDragHandlers={dragAndDrop.breadcrumb}
             />
             <FileGrid
-                items={sortedFolderContents}
-                selectedItemKeys={fileSelection.items.selectedItemKeys}
-                openItemMenuKey={fileSelection.menu.openItemMenuKey}
+                items={folderContents}
+                selectedItemPaths={fileSelection.items.selectedItemPaths}
+                openItemMenuPath={fileSelection.menu.openItemMenuPath}
+                openItemMenuPosition={fileSelection.menu.openItemMenuPosition}
                 dragContext={dragAndDrop.context}
                 onTileClick={fileSelection.handlers.handleTileSelectionToggle}
                 onTileDoubleClick={pathNavigation.navigation.handleFolderOpen}
                 onTileContextMenu={fileSelection.handlers.handleItemContextMenu}
                 onCheckboxChange={fileSelection.handlers.handleItemCheckboxChange}
-                onMenuToggle={fileSelection.handlers.handleItemMenuToggle}
                 onMenuAction={fileOperations.handleItemMenuAction}
                 onBlankAreaClick={fileSelection.handlers.handleBlankAreaClick}
                 onItemDragStart={dragAndDrop.item.handleDragStart}

@@ -1,19 +1,5 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import type { ItemMenuAction } from './types';
-
-const getItemNameFromKey = (itemKey: string) => {
-    const separatorIndex = itemKey.indexOf(':');
-    return separatorIndex >= 0 ? itemKey.slice(separatorIndex + 1) : itemKey;
-};
-
-const normalizePathSeparators = (value: string) => value.replace(/\//g, '\\').replace(/\\{2,}/g, '\\');
-
-const trimTrailingSeparators = (value: string) => value.replace(/[\\/]+$/, '');
-
-const joinPathSegment = (basePath: string, childName: string) => {
-    const normalizedBasePath = trimTrailingSeparators(normalizePathSeparators(basePath));
-    return `${normalizedBasePath}\\${childName}`;
-};
 
 interface UseFileOperationsParams {
     currentPath: string;
@@ -21,41 +7,38 @@ interface UseFileOperationsParams {
 }
 
 export const useFileOperations = ({ currentPath, closeItemMenu }: UseFileOperationsParams) => {
-    const buildPathsFromKeys = useCallback(
-        (itemKeys: string[]) => itemKeys.map((itemKey) => joinPathSegment(currentPath, getItemNameFromKey(itemKey))),
-        [currentPath],
-    );
-
-    const getPathForCurrentFolderChild = useCallback((childName: string) => joinPathSegment(currentPath, childName), [currentPath]);
+    const itemPathClipboardRef = useRef<string[]>([]);
 
     const handleRefresh = useCallback(() => {
         // TODO: implement refresh logic once backend is wired.
     }, []);
 
-    const handleDownload = useCallback((itemKeys: string[]) => {
+    const handleDownload = useCallback((itemPaths: string[]) => {
         // TODO: wire to backend download endpoint when file selection is implemented.
-        void itemKeys;
+        void itemPaths;
     }, []);
 
     const handleUpload = useCallback(() => {
         // TODO: wire to upload flow when file selection/target directory is implemented.
     }, []);
 
-    const handleDelete = useCallback((itemKeys: string[]) => {
+    const handleDelete = useCallback((itemPaths: string[]) => {
         // TODO: implement delete logic once backend is wired.
-        void itemKeys;
+        void itemPaths;
     }, []);
 
-    const handleCopy = useCallback((itemKeys: string[]) => {
+    const handleCopy = useCallback((itemPaths: string[]) => {
         // TODO: implement copy logic once backend is wired.
-        void itemKeys;
+        void itemPaths;
 
-        console.log('Copying items', itemKeys);
+        itemPathClipboardRef.current = itemPaths;
+
+        console.log('Copying items', itemPaths);
     }, []);
 
     const handlePaste = useCallback(() => {
         // TODO: implement paste logic once backend is wired.
-        console.log('Pasting items into', currentPath);
+        console.log('Pasting items ', itemPathClipboardRef.current, ' into ', currentPath);
     }, [currentPath]);
 
     const handleMove = useCallback((sourceItemPaths: string[], targetPath: string) => {
@@ -66,28 +49,32 @@ export const useFileOperations = ({ currentPath, closeItemMenu }: UseFileOperati
         console.log('Moving items', sourceItemPaths, 'to', targetPath);
     }, []);
 
-    const handleRename = useCallback((itemKey: string) => {
+    const handleRename = useCallback((itemPath: string) => {
         // TODO: implement rename logic once backend is wired.
-        void itemKey;
+        void itemPath;
     }, []);
 
     const handleItemMenuAction = useCallback(
-        (action: ItemMenuAction, itemKey: string) => {
+        (action: ItemMenuAction, itemPaths: string[]) => {
             closeItemMenu();
 
-            console.log('Menu action', action, 'on item', itemKey);
+            if (itemPaths.length === 0) {
+                return;
+            }
+
+            console.log('Menu action', action, 'on items', itemPaths);
             switch (action) {
                 case 'rename':
-                    handleRename(itemKey);
+                    handleRename(itemPaths[0]);
                     break;
                 case 'download':
-                    handleDownload([itemKey]);
+                    handleDownload(itemPaths);
                     break;
                 case 'delete':
-                    handleDelete([itemKey]);
+                    handleDelete(itemPaths);
                     break;
                 case 'copy':
-                    handleCopy([itemKey]);
+                    handleCopy(itemPaths);
                     break;
                 default:
                     break;
@@ -105,7 +92,5 @@ export const useFileOperations = ({ currentPath, closeItemMenu }: UseFileOperati
         handlePaste,
         handleMove,
         handleItemMenuAction,
-        buildPathsFromKeys,
-        getPathForCurrentFolderChild,
     };
 };

@@ -5,10 +5,10 @@ interface SelectionBarProps {
     selectAllCheckboxRef: React.RefObject<HTMLInputElement | null>;
     onSelectAllChange: (checked: boolean) => void;
     selectedCount: number;
-    selectedItemKeys: string[];
-    onDelete: (keys: string[]) => void;
-    onDownload: (keys: string[]) => void;
-    onCopy: (keys: string[]) => void;
+    selectedItemPaths: string[];
+    onDelete: (paths: string[]) => void;
+    onDownload: (paths: string[]) => void;
+    onCopy: (paths: string[]) => void;
 }
 
 export const SelectionBar: React.FC<SelectionBarProps> = ({
@@ -16,7 +16,7 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
     selectAllCheckboxRef,
     onSelectAllChange,
     selectedCount,
-    selectedItemKeys,
+    selectedItemPaths,
     onDelete,
     onCopy,
     onDownload,
@@ -37,7 +37,7 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
             <button
                 type="button"
                 className="nav-delete-button"
-                onClick={() => onDelete(selectedItemKeys)}
+                onClick={() => onDelete(selectedItemPaths)}
                 disabled={selectedCount === 0}
                 title={selectedCount === 0 ? 'Select items to delete' : `Delete ${selectedCount} item(s)`}
             >
@@ -48,7 +48,7 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
             <button
                 type="button"
                 className="nav-copy-button"
-                onClick={() => onCopy(selectedItemKeys)}
+                onClick={() => onCopy(selectedItemPaths)}
                 disabled={selectedCount === 0}
                 title={selectedCount === 0 ? 'Select items to copy' : `Copy ${selectedCount} item(s)`}
             >
@@ -59,7 +59,7 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
             <button
                 type="button"
                 className="nav-download-button"
-                onClick={() => onDownload(selectedItemKeys)}
+                onClick={() => onDownload(selectedItemPaths)}
                 disabled={selectedCount === 0}
                 title={selectedCount === 0 ? 'Select items to download' : `Download ${selectedCount} item(s)`}
             >

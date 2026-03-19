@@ -24,7 +24,7 @@ interface FileExplorerNavBarProps {
         handlePathSegmentClick: (path: string) => (e: React.MouseEvent<HTMLButtonElement>) => void;
     };
     selection: {
-        selectedItemKeys: string[];
+        selectedItemPaths: string[];
         selectedCount: number;
     };
     selectAll: {
@@ -37,9 +37,9 @@ interface FileExplorerNavBarProps {
     showScrollHintRight: boolean;
     onRefresh: () => void;
     onUpload: () => void;
-    onDelete: (keys: string[]) => void;
-    onDownload: (keys: string[]) => void;
-    onCopy: (keys: string[]) => void;
+    onDelete: (paths: string[]) => void;
+    onDownload: (paths: string[]) => void;
+    onCopy: (paths: string[]) => void;
     onPaste: () => void;
     dragContext: DragContext;
     breadcrumbDragHandlers: {
@@ -96,7 +96,7 @@ export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
                 selectAllCheckboxRef={selectAll.selectAllCheckboxRef}
                 onSelectAllChange={selectAll.handleSelectAllChange}
                 selectedCount={selection.selectedCount}
-                selectedItemKeys={selection.selectedItemKeys}
+                selectedItemPaths={selection.selectedItemPaths}
                 onDelete={onDelete}
                 onDownload={onDownload}
                 onCopy={onCopy}

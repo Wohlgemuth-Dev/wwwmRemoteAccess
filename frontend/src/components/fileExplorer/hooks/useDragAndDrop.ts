@@ -1,29 +1,21 @@
 import { useState } from 'react';
 import type { DragContext, FileItem } from './types';
 
-const parseDraggedItems = (draggedKeys: string[], dataTransfer: DataTransfer): string[] => {
-    if (draggedKeys.length > 0) {
-        return draggedKeys;
-    }
-    const data = dataTransfer.getData('text/plain');
-    return data.split(',').filter(Boolean);
-};
-
-const validateDropTarget = (sourceKeys: string[], targetId: string): boolean => {
-    if (sourceKeys.length === 0) return false;
-    if (sourceKeys.includes(targetId)) return false;
+const validateDropTarget = (sourcePaths: string[], targetId: string): boolean => {
+    if (sourcePaths.length === 0) return false;
+    if (sourcePaths.includes(targetId)) return false;
     return true;
 };
 
 type UseDragAndDropOptions = {
     getItemKey: (item: FileItem) => string;
-    onDropToPath: (sourceItemKeys: string[], segmentPath: string) => void;
-    onDropToFolder: (sourceItemKeys: string[], targetItem: FileItem) => void;
+    onDropToPath: (sourceItemPaths: string[], segmentPath: string) => void;
+    onDropToFolder: (sourceItemPaths: string[], targetItem: FileItem) => void;
 };
 
 export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: UseDragAndDropOptions) => {
     const [dragContext, setDragContext] = useState<DragContext>({
-        draggedItemKeys: [],
+        draggedItemPaths: [],
         dropTargetType: null,
         dropTargetId: null,
     });
@@ -44,12 +36,12 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
 
     const clearDragContext = () => {
         setDragContext((prev) => {
-            if (prev.draggedItemKeys.length === 0 && prev.dropTargetType === null && prev.dropTargetId === null) {
+            if (prev.draggedItemPaths.length === 0 && prev.dropTargetType === null && prev.dropTargetId === null) {
                 return prev;
             }
 
             return {
-                draggedItemKeys: [],
+                draggedItemPaths: [],
                 dropTargetType: null,
                 dropTargetId: null,
             };
@@ -58,7 +50,7 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
 
     const handleBreadcrumbDragOver = (e: React.DragEvent<HTMLButtonElement>) => {
         const targetPath = e.currentTarget.dataset.targetPath;
-        if (!targetPath || dragContext.draggedItemKeys.length === 0) return;
+        if (!targetPath || dragContext.draggedItemPaths.length === 0) return;
 
         e.preventDefault();
         e.stopPropagation();
@@ -79,39 +71,39 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
         e.preventDefault();
         e.stopPropagation();
 
-        const sourceItemKeys = parseDraggedItems(dragContext.draggedItemKeys, e.dataTransfer);
+        const sourceItemPaths = dragContext.draggedItemPaths;
         clearDragContext();
 
-        if (sourceItemKeys.length === 0 || !segmentPath) return;
-        onDropToPath(sourceItemKeys, segmentPath);
+        if (sourceItemPaths.length === 0 || !segmentPath) return;
+        onDropToPath(sourceItemPaths, segmentPath);
     };
 
-    const handleItemDragStart = (itemKey: string, selectedItemKeys: string[]) => (e: React.DragEvent<HTMLDivElement>) => {
-        const itemsToMove = selectedItemKeys.includes(itemKey) ? selectedItemKeys : [itemKey];
+    const handleItemDragStart = (itemPath: string, selectedItemPaths: string[]) => (e: React.DragEvent<HTMLDivElement>) => {
+        const itemsToMove = selectedItemPaths.includes(itemPath) ? selectedItemPaths : [itemPath];
         setDragContext({
-            draggedItemKeys: itemsToMove,
+            draggedItemPaths: itemsToMove,
             dropTargetType: null,
             dropTargetId: null,
         });
 
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', itemsToMove.join(','));
+        e.dataTransfer.setData('text/plain', 'wwwm-file-explorer-dnd');
     };
 
     const handleItemDragOver = (targetItem: FileItem) => (e: React.DragEvent<HTMLDivElement>) => {
-        if (targetItem.type !== 'folder' || dragContext.draggedItemKeys.length === 0) return;
+        if (targetItem.type !== 'folder' || dragContext.draggedItemPaths.length === 0) return;
 
-        const itemKey = getItemKey(targetItem);
-        if (dragContext.draggedItemKeys.includes(itemKey)) return;
+        const itemPath = getItemKey(targetItem);
+        if (dragContext.draggedItemPaths.includes(itemPath)) return;
 
         e.preventDefault();
         e.stopPropagation();
         e.dataTransfer.dropEffect = 'move';
-        setDropTarget('item', itemKey);
+        setDropTarget('item', itemPath);
     };
 
-    const handleItemDragLeave = (itemKey: string) => (_e: React.DragEvent<HTMLDivElement>) => {
-        if (dragContext.dropTargetId === itemKey) {
+    const handleItemDragLeave = (itemPath: string) => (_e: React.DragEvent<HTMLDivElement>) => {
+        if (dragContext.dropTargetId === itemPath) {
             setDropTarget(null, null);
         }
     };
@@ -122,14 +114,14 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
         e.preventDefault();
         e.stopPropagation();
 
-        const sourceItemKeys = parseDraggedItems(dragContext.draggedItemKeys, e.dataTransfer);
-        const targetItemKey = getItemKey(targetItem);
+        const sourceItemPaths = dragContext.draggedItemPaths;
+        const targetItemPath = getItemKey(targetItem);
 
         clearDragContext();
 
-        if (!validateDropTarget(sourceItemKeys, targetItemKey)) return;
+        if (!validateDropTarget(sourceItemPaths, targetItemPath)) return;
 
-        onDropToFolder(sourceItemKeys, targetItem);
+        onDropToFolder(sourceItemPaths, targetItem);
     };
 
     const handleItemDragEnd = () => {
