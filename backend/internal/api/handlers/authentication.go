@@ -1,14 +1,12 @@
 package handlers
 
 import (
-	"fmt"
 	"os"
 	"os/user"
 	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/msteinert/pam/v2"
 
 	"wwwmRemoteAccess/internal/auth"
@@ -49,29 +47,6 @@ func pamAuthenticate(username, password string) error {
 	return nil
 }
 
-// ValidateToken parses and validates a JWT token
-func ValidateToken(tokenString string) (jwt.MapClaims, error) {
-	secretStr := os.Getenv("JWT_SECRET")
-	if secretStr == "" {
-		secretStr = "my-super-secret-key-12345"
-	}
-
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(secretStr), nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims, nil
-	}
-	return nil, fmt.Errorf("invalid token")
-}
 
 // LoginHandler handles user login
 func LoginHandler(c *fiber.Ctx) error {
