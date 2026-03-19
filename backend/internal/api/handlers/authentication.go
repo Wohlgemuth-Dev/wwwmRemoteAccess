@@ -47,6 +47,7 @@ func pamAuthenticate(username, password string) error {
 	return nil
 }
 
+
 // LoginHandler handles user login
 func LoginHandler(c *fiber.Ctx) error {
 	var req LoginRequest
@@ -90,6 +91,7 @@ func LoginHandler(c *fiber.Ctx) error {
 		"token": token,
 	})
 }
+
 
 func LogoutHandler(c *fiber.Ctx) error {
 	token, ok := c.Locals("token").(string)
