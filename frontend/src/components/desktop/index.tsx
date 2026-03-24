@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Navbar from "../navbar/Navbar";
 import Console from "../console/Console";
+import FileExplorer from '../fileExplorer/FileExplorer';
 
 const Desktop = () => {
     const [activeApp, setActiveApp] = useState<string>('home');
@@ -16,12 +17,7 @@ const Desktop = () => {
                     </div>
                 )}
                 {activeApp === 'console' && <Console />}
-                {activeApp === 'file-explorer' && (
-                    <div style={{ padding: '20px' }}>
-                        <h1>File Explorer</h1>
-                        <p>File Explorer content to be populated later.</p>
-                    </div>
-                )}
+                {activeApp === 'file-explorer' && <FileExplorer />}
                 {activeApp === 'system-monitor' && (
                     <div style={{ padding: '20px' }}>
                         <h1>System Monitor</h1>
