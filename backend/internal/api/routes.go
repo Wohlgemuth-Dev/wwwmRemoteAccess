@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"wwwmRemoteAccess/internal/api/handlers"
+	"wwwmRemoteAccess/internal/api/handlers/fileexplorer"
 	"wwwmRemoteAccess/internal/api/middleware"
 	"wwwmRemoteAccess/internal/auth"
 )
@@ -26,6 +27,9 @@ func SetupRoutes(app *fiber.App) {
 	// Status endpoint
 	api.Get("/status", handlers.StatusHandler)
 	api.Get("/clock", handlers.ClockHandler)
+
+	// File Explorer
+	api.Post("/fileexplorer/navigate", fileexplorer.NavigateHandler)
 	
 	api.Use("/console", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
@@ -36,8 +40,4 @@ func SetupRoutes(app *fiber.App) {
 	api.Get("/console", websocket.New(handlers.ConsoleWebSocketHandler, websocket.Config{
 		Subprotocols: []string{"access_token"},
 	}))
-
-	// templates:
-	// example := api.Group("/example")
-	// example.Get("/users", handlers.UsersHandler)
 }
