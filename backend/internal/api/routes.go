@@ -40,4 +40,8 @@ func SetupRoutes(app *fiber.App) {
 	api.Get("/console", websocket.New(handlers.ConsoleWebSocketHandler, websocket.Config{
 		Subprotocols: []string{"access_token"},
 	}))
+
+	// templates:
+	// example := api.Group("/example")
+	// example.Get("/users", handlers.UsersHandler)
 }
