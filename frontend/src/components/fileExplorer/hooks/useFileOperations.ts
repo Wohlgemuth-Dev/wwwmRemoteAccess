@@ -1,17 +1,39 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ItemMenuAction } from './types';
+import { fileExplorerApi } from '../../../service/api/fileexplorer';
 
 interface UseFileOperationsParams {
     currentPath: string;
+    setCurrentPath: (path: string) => void;
     closeItemMenu: () => void;
 }
 
-export const useFileOperations = ({ currentPath, closeItemMenu }: UseFileOperationsParams) => {
+export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }: UseFileOperationsParams) => {
     const itemPathClipboardRef = useRef<string[]>([]);
+    const [rawItems, setRawItems] = useState<{ name: string; type: 'file' | 'folder' }[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleRefresh = useCallback(() => {
-        // TODO: implement refresh logic once backend is wired.
-    }, []);
+    const handleRefresh = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fileExplorerApi.navigate(currentPath);
+            setRawItems(response.items);
+            if (!currentPath && response.currentPath) {
+                setCurrentPath(response.currentPath);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load directory');
+            setRawItems([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [currentPath, setCurrentPath]);
+
+    useEffect(() => {
+        handleRefresh();
+    }, [handleRefresh]);
 
     const handleDownload = useCallback((itemPaths: string[]) => {
         // TODO: wire to backend download endpoint when file selection is implemented.
@@ -84,6 +106,9 @@ export const useFileOperations = ({ currentPath, closeItemMenu }: UseFileOperati
     );
 
     return {
+        rawItems,
+        loading,
+        error,
         handleRefresh,
         handleDownload,
         handleUpload,
