@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
 import './FileExplorer.css';
 import { useExplorerShortcuts } from './hooks/useExplorerShortcuts';
 import { useFileOperations } from './hooks/useFileOperations';
@@ -11,7 +11,6 @@ import {
 import type { FileItem } from './hooks';
 import { FileExplorerNavBar, FileGrid } from './components';
 import { DEFAULT_PATH, FALLBACK_FOLDER } from './constants';
-import { fileExplorerApi } from '../../service/api/fileexplorer';
 
 // Pure helpers
 const joinPathSegment = (basePath: string, childName: string) => {
@@ -38,56 +37,31 @@ const sortFolderContents = <T extends SortableFileItem>(items: T[]) => {
 // Component
 const FileExplorer: React.FC = () => {
     const breadcrumbsRef = useRef<HTMLDivElement>(null);
-    const [rawItems, setRawItems] = useState<{ name: string; type: 'file' | 'folder' }[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     // Path Navigation
     const pathNavigation = usePathNavigation(DEFAULT_PATH, FALLBACK_FOLDER);
-
-    // Fetch directory contents from backend
-    const fetchDirectoryContents = useCallback(async (path: string) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fileExplorerApi.navigate(path);
-            setRawItems(response.items);
-            // On initial load (empty path), set path from server response
-            if (!path && response.currentPath) {
-                pathNavigation.path.setCurrentPath(response.currentPath);
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load directory');
-            setRawItems([]);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchDirectoryContents(pathNavigation.path.currentPath);
-    }, [pathNavigation.path.currentPath, fetchDirectoryContents]);
-
-    // Folder contents
-    const sortedFolderContents = useMemo(() => sortFolderContents(rawItems), [rawItems]);
-    const folderContents = useMemo(
-        () => sortedFolderContents.map((item) => ({ ...item, fullPath: joinPathSegment(pathNavigation.path.currentPath, item.name) })),
-        [sortedFolderContents, pathNavigation.path.currentPath],
-    );
-    const allItemPaths = useMemo(() => folderContents.map(getItemKey), [folderContents]);
-
-    // Selection Management
-    const fileSelection = useFileSelection(allItemPaths);
 
     const currentPath = pathNavigation.path.currentPath;
 
     const fileOperations = useFileOperations({
         currentPath,
+        setCurrentPath: pathNavigation.path.setCurrentPath,
         closeItemMenu: () => {
             fileSelection.menu.setOpenItemMenuPath(null);
             fileSelection.menu.setOpenItemMenuPosition(null);
         },
     });
+
+    // Folder contents
+    const sortedFolderContents = useMemo(() => sortFolderContents(fileOperations.rawItems), [fileOperations.rawItems]);
+    const folderContents = useMemo(
+        () => sortedFolderContents.map((item) => ({ ...item, fullPath: joinPathSegment(currentPath, item.name) })),
+        [sortedFolderContents, currentPath],
+    );
+    const allItemPaths = useMemo(() => folderContents.map(getItemKey), [folderContents]);
+
+    // Selection Management
+    const fileSelection = useFileSelection(allItemPaths);
 
     // Scroll hint
     const { showScrollHintLeft, showScrollHintRight } = useScrollHint(
@@ -128,7 +102,7 @@ const FileExplorer: React.FC = () => {
                 breadcrumbsRef={breadcrumbsRef}
                 showScrollHintLeft={showScrollHintLeft}
                 showScrollHintRight={showScrollHintRight}
-                onRefresh={() => fetchDirectoryContents(currentPath)}
+                onRefresh={fileOperations.handleRefresh}
                 onUpload={fileOperations.handleUpload}
                 onDelete={fileOperations.handleDelete}
                 onDownload={fileOperations.handleDownload}
@@ -137,8 +111,8 @@ const FileExplorer: React.FC = () => {
                 dragContext={dragAndDrop.context}
                 breadcrumbDragHandlers={dragAndDrop.breadcrumb}
             />
-            {error && <div className="file-explorer-error">{error}</div>}
-            {loading ? (
+            {fileOperations.error && <div className="file-explorer-error">{fileOperations.error}</div>}
+            {fileOperations.loading ? (
                 <div className="file-explorer-loading">Loading...</div>
             ) : (
                 <FileGrid
