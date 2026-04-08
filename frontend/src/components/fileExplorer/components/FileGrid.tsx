@@ -70,6 +70,18 @@ export const FileGrid: React.FC<FileGridProps> = ({
         const pathWithNewname = pathPlusName[0] ? `${pathPlusName[0]}/${newName}` : newName;
         return pathWithNewname?.trim() || undefined;
     };
+    const confirmDeletePrompt = (itemPaths: string[]): boolean => {
+        const itemNames = itemPaths.map(getItemNameFromPath).map(([, name]) => name);
+        return window.confirm(`Are you sure you want to delete the following items?\n\n${itemNames.join('\n')}`);
+    };
+
+    const handleDeleteClick = () => {
+        if (!confirmDeletePrompt(menuTargetPaths)) {
+            return;
+        }
+
+        onMenuAction('delete', menuTargetPaths);
+    };
     return (
         <div className="file-explorer-content" onClick={onBlankAreaClick}>
             <div className="file-list" onClick={onBlankAreaClick}>
@@ -118,7 +130,10 @@ export const FileGrid: React.FC<FileGridProps> = ({
                     <button type="button" className="file-item-menu-item" onClick={() => onMenuAction('download', menuTargetPaths)}>
                         Download
                     </button>
-                    <button type="button" className="file-item-menu-item" onClick={() => onMenuAction('delete', menuTargetPaths)}>
+                    <button 
+                        type="button" 
+                        className="file-item-menu-item"
+                        onClick={handleDeleteClick}>
                         Delete
                     </button>
                     <button type="button" className="file-item-menu-item" onClick={() => onMenuAction('copy', menuTargetPaths)}>
