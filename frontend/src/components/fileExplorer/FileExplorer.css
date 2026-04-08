@@ -30,7 +30,8 @@
     color: var(--text-primary);
 }
 
-.file-explorer-content {
+.file-explorer-content,
+.file-explorer-loading {
     flex: 1;
     padding: 0.75rem;
     background: linear-gradient(180deg, rgba(12, 12, 16, 0.82), rgba(10, 10, 14, 0.92));
@@ -59,6 +60,10 @@
 .file-explorer-content::-webkit-scrollbar-thumb:hover {
     background: var(--border-strong);
     background-clip: content-box;
+}
+
+.file-explorer-loading {
+    color: white;
 }
 
 .file-list {
