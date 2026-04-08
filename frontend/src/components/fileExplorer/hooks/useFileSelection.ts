@@ -23,6 +23,15 @@ export const useFileSelection = (allItemPaths: string[]) => {
         }
     }, [isSelectAllIndeterminate]);
 
+    useEffect(() => {
+        const itemPathSet = new Set(allItemPaths);
+
+        setSelectedItemPaths((prev) => {
+            const next = prev.filter((path) => itemPathSet.has(path));
+            return next.length === prev.length ? prev : next;
+        });
+    }, [allItemPaths]);
+
     const handleSelectAllChange = (checked: boolean) => {
         setSelectedItemPaths(checked ? allItemPaths : []);
     };
