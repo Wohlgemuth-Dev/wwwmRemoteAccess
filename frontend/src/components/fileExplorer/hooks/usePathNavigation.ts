@@ -1,33 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FileItem, PathSegment } from './types';
 
-const normalizePathSeparators = (value: string) => value.replace(/\//g, '\\').replace(/\\{2,}/g, '\\');
-
-const trimTrailingSeparators = (value: string) => value.replace(/[\\/]+$/, '');
-
 const joinPathSegment = (basePath: string, childName: string) => {
-    const normalizedBasePath = trimTrailingSeparators(normalizePathSeparators(basePath));
-    return `${normalizedBasePath}\\${childName}`;
+    const trimmed = basePath.replace(/\/+$/, '');
+    return `${trimmed}/${childName}`;
 };
 
 const buildPathSegments = (path: string): PathSegment[] => {
-    const normalizedPath = normalizePathSeparators(path);
-    const driveMatch = normalizedPath.match(/^[A-Za-z]:/);
-    const drive = driveMatch ? driveMatch[0] : '';
-
-    const withoutDrive = drive ? normalizedPath.slice(drive.length).replace(/^\\+/, '') : normalizedPath;
-    const folders = withoutDrive.split('\\').filter(Boolean);
-
-    const segments: PathSegment[] = [];
-
-    if (drive) {
-        segments.push({ label: drive, fullPath: `${drive}\\` });
+    if (!path || path === '/') {
+        return [{ label: '/', fullPath: '/' }];
     }
 
-    folders.forEach((folder, index) => {
-        const leading = drive ? `${drive}\\` : '';
-        const fullPath = `${leading}${folders.slice(0, index + 1).join('\\')}`;
-        segments.push({ label: folder, fullPath });
+    const parts = path.split('/').filter(Boolean);
+    const segments: PathSegment[] = [{ label: '/', fullPath: '/' }];
+
+    parts.forEach((part, index) => {
+        const fullPath = '/' + parts.slice(0, index + 1).join('/');
+        segments.push({ label: part, fullPath });
     });
 
     return segments;
@@ -39,7 +28,8 @@ const normalizePathInput = (value: string, fallbackPath: string) => {
         return fallbackPath;
     }
 
-    return normalizePathSeparators(trimmed);
+    // Normalize multiple slashes
+    return trimmed.replace(/\/{2,}/g, '/');
 };
 
 export const usePathNavigation = (initialPath: string, fallbackFolder: string) => {
@@ -115,6 +105,7 @@ export const usePathNavigation = (initialPath: string, fallbackFolder: string) =
         // Current state
         path: {
             currentPath,
+            setCurrentPath,
             currentFolder,
             pathSegments,
         },
@@ -141,3 +132,4 @@ export const usePathNavigation = (initialPath: string, fallbackFolder: string) =
         },
     };
 };
+

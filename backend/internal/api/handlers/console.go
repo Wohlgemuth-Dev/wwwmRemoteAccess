@@ -9,13 +9,10 @@ import (
 	"github.com/gofiber/contrib/websocket"
 )
 
-
 type ConsoleInput struct {
-	Token string `json:"token"`
+	Token   string `json:"token"`
 	Command string `json:"input"`
 }
-
-
 
 func ConsoleWebSocketHandler(c *websocket.Conn) {
 	username := c.Locals("username").(string)
