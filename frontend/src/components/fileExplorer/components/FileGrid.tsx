@@ -4,6 +4,13 @@ import { FileItem } from './FileItem';
 
 const getItemKey = (item: FileItemType) => item.fullPath;
 
+const getItemNameFromPath = (itemPath: string) => {
+    const normalizedPath = itemPath.replace(/\\/g, '/');
+    const parts = normalizedPath.split('/').filter(Boolean);
+    
+    return [`/${parts.slice(0, -1).join('/')}`, parts[parts.length - 1] || itemPath];
+};
+
 type MenuPosition = {
     x: number;
     y: number;
@@ -19,7 +26,7 @@ interface FileGridProps {
     onTileDoubleClick: (item: FileItemType) => void;
     onTileContextMenu: (itemPath: string) => (e: React.MouseEvent<HTMLDivElement>) => void;
     onCheckboxChange: (itemPath: string, checked: boolean) => void;
-    onMenuAction: (action: ItemMenuAction, itemPaths: string[]) => void;
+    onMenuAction: (action: ItemMenuAction, itemPaths: string[], newName?: string) => void;
     onBlankAreaClick: (e: React.MouseEvent<HTMLDivElement>) => void;
     onItemDragStart: (itemPath: string, selectedPaths: string[]) => (e: React.DragEvent<HTMLDivElement>) => void;
     onItemDragOver: (item: FileItemType) => (e: React.DragEvent<HTMLDivElement>) => void;
@@ -49,13 +56,20 @@ export const FileGrid: React.FC<FileGridProps> = ({
     isItemSelected,
 }) => {
     const menuTargetPaths =
-        selectedItemPaths.length > 0
+        selectedItemPaths.length > 1
             ? selectedItemPaths
             : openItemMenuPath
               ? [openItemMenuPath]
               : [];
-    const isRenameDisabled = menuTargetPaths.length !== 1;
+    const isRenameDisabled = menuTargetPaths.length > 1;
 
+    const newNamePrompt = (itemPath: string): string | undefined => {
+        const pathPlusName = getItemNameFromPath(itemPath);
+        const promptValue = window.prompt('Enter new name:', pathPlusName[1]);
+        const newName = promptValue?.trim() || pathPlusName[1];
+        const pathWithNewname = pathPlusName[0] ? `${pathPlusName[0]}/${newName}` : newName;
+        return pathWithNewname?.trim() || undefined;
+    };
     return (
         <div className="file-explorer-content" onClick={onBlankAreaClick}>
             <div className="file-list" onClick={onBlankAreaClick}>
@@ -97,7 +111,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                         type="button"
                         className="file-item-menu-item"
                         disabled={isRenameDisabled}
-                        onClick={() => onMenuAction('rename', menuTargetPaths)}
+                        onClick={() => onMenuAction('rename', menuTargetPaths, newNamePrompt(menuTargetPaths[0]))}
                     >
                         Rename
                     </button>
