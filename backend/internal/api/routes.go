@@ -30,7 +30,8 @@ func SetupRoutes(app *fiber.App) {
 
 	// File Explorer
 	api.Post("/fileexplorer/navigate", fileexplorer.NavigateHandler)
-	
+	api.Post("/fileexplorer/paste-bulk", fileexplorer.PasteBulkHandler)
+
 	api.Use("/console", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			return c.Next()
