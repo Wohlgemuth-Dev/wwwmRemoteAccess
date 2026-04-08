@@ -14,7 +14,7 @@ type PasteBulkRequest struct {
 	DestinationPath string   `json:"destinationPath"`
 }
 
-func pasteBulkHandler(c *fiber.Ctx) error {
+func PasteBulkHandler(c *fiber.Ctx) error {
 	uid := c.Locals("uid").(uint32)
 	gid := c.Locals("gid").(uint32)
 	username := c.Locals("username").(string)
