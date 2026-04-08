@@ -13,4 +13,6 @@ export type NavigateResponse = {
 export const fileExplorerApi = {
     navigate: (path: string) =>
         apiClient.post<NavigateResponse>('/api/fileexplorer/navigate', { path }),
+    pasteBulk: (items: string[], destinationPath: string) =>
+        apiClient.post('/api/fileexplorer/paste-bulk', { items, destinationPath })
 };
