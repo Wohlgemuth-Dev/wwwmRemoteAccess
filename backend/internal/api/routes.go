@@ -33,6 +33,10 @@ func SetupRoutes(app *fiber.App) {
 	api.Post("/fileexplorer/delete-bulk", fileexplorer.DeleteBulkHandler)
 	api.Post("/fileexplorer/rename", fileexplorer.RenameItem)
 
+	api.Post("/fileexplorer/paste-bulk", fileexplorer.PasteBulkHandler)
+	api.Post("/fileexplorer/move-bulk", fileexplorer.MoveBulkHandler)
+
+	// Console WebSocket endpoint
 	api.Use("/console", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			return c.Next()

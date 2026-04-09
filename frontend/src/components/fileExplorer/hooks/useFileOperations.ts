@@ -17,6 +17,7 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
     const handleRefresh = useCallback(async () => {
         setLoading(true);
         setError(null);
+        console.log('Refreshing folder contents for path', currentPath);
         try {
             const response = await fileExplorerApi.navigate(currentPath);
             setRawItems(response.items);
@@ -67,15 +68,26 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
     const handlePaste = useCallback(() => {
         // TODO: implement paste logic once backend is wired.
         console.log('Pasting items ', itemPathClipboardRef.current, ' into ', currentPath);
+        fileExplorerApi.pasteBulk(itemPathClipboardRef.current, currentPath)
+        .then(() => {
+            itemPathClipboardRef.current = [];
+            handleRefresh();
+        }).catch((err) => {
+            console.error('Failed to paste items', err);
+        });
     }, [currentPath]);
 
     const handleMove = useCallback((sourceItemPaths: string[], targetPath: string) => {
         // TODO: implement move logic once backend is wired.
-        void sourceItemPaths;
-        void targetPath;
-
         console.log('Moving items', sourceItemPaths, 'to', targetPath);
-    }, []);
+
+        fileExplorerApi.moveBulk(sourceItemPaths, targetPath)
+        .then(() => {
+            handleRefresh();
+        }).catch((err) => {
+            console.error('Failed to move items', err, "to target path", targetPath);
+        });
+    }, [currentPath]);
 
     const handleRename = useCallback((itemPath: string, newPath: string) => {
         // TODO: implement rename logic once backend is wired.
