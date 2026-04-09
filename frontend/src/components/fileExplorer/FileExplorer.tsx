@@ -121,6 +121,7 @@ const FileExplorer: React.FC = () => {
                     openItemMenuPath={fileSelection.menu.openItemMenuPath}
                     openItemMenuPosition={fileSelection.menu.openItemMenuPosition}
                     dragContext={dragAndDrop.context}
+                    onCreateItem={fileOperations.handleCreateItem}
                     onTileClick={fileSelection.handlers.handleTileSelectionToggle}
                     onTileDoubleClick={pathNavigation.navigation.handleFolderOpen}
                     onTileContextMenu={fileSelection.handlers.handleItemContextMenu}

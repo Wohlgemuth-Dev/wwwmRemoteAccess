@@ -2,10 +2,10 @@ package fileexplorer
 
 import (
 	"fmt"
-	"os/exec"
+	"log"
 	"path/filepath"
 	"strings"
-	"syscall"
+	"wwwmRemoteAccess/internal/api/handlers"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -26,9 +26,6 @@ type NavigateResponse struct {
 
 // NavigateHandler uses ls as a logged in user
 func NavigateHandler(c *fiber.Ctx) error {
-	uid := c.Locals("uid").(uint32)
-	gid := c.Locals("gid").(uint32)
-	username := c.Locals("username").(string)
 	homeDir := c.Locals("homeDir").(string)
 
 	var req NavigateRequest
@@ -50,17 +47,10 @@ func NavigateHandler(c *fiber.Ctx) error {
 	// Use ls -1F to list directory contents as the authenticated user
 	// -1: one entry per line
 	// -F: append indicator (/ for directories)
-	cmd := exec.Command("ls", "-1F", targetPath)
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Credential: &syscall.Credential{
-			Uid: uid,
-			Gid: gid,
-		},
-	}
-	cmd.Env = []string{
-		"HOME=" + homeDir,
-		"USER=" + username,
-		"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+	cmd, err := handlers.SetupCmd(c, "ls", "-1F", targetPath)
+	if err != nil {
+		log.Printf("SetupCmd error: %v", err)
+		return err
 	}
 
 	output, err := cmd.Output()
