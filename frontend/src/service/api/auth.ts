@@ -16,5 +16,8 @@ export const authApi = {
         apiClient.post<AuthResponse>('/auth/login', { username, password }),
 
     logout: () =>
-        apiClient.post('/auth/logout', {}),
+        apiClient.post('/api/logout', {}),
+
+    renewSession: () =>
+        apiClient.post<AuthResponse>('/api/session/renew', {}),
 };

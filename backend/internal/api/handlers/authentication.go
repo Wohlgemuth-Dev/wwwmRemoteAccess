@@ -103,3 +103,24 @@ func LogoutHandler(c *fiber.Ctx) error {
 		"message": "Logout successful",
 	})
 }
+
+// RenewSessionHandler creates a new token with fresh expiry for the current session
+func RenewSessionHandler(c *fiber.Ctx) error {
+	token, ok := c.Locals("token").(string)
+	if !ok || token == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "No valid session",
+		})
+	}
+
+	newToken, err := auth.GlobalStore.RenewSession(token)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Could not renew session",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"token": newToken,
+	})
+}

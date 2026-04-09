@@ -24,6 +24,9 @@ func SetupRoutes(app *fiber.App) {
 	// Protected logout endpoint
 	api.Post("/logout", handlers.LogoutHandler)
 
+	// Session renewal endpoint
+	api.Post("/session/renew", handlers.RenewSessionHandler)
+
 	// Status endpoint
 	api.Get("/status", handlers.StatusHandler)
 	api.Get("/clock", handlers.ClockHandler)
