@@ -1,6 +1,7 @@
 import './index.css'
 import Desktop from './components/desktop';
 import LoginScreen from './components/login';
+import SessionTimeoutManager from './components/sessionTimeout/SessionTimeoutManager';
 import { AuthProvider, useAuth } from './service/AuthContext';
 
 const AppContent = () => {
@@ -8,6 +9,7 @@ const AppContent = () => {
     if (!isAuthenticated) return <LoginScreen />;
     return (
         <>
+            <SessionTimeoutManager />
             <Desktop />
         </>
     );
