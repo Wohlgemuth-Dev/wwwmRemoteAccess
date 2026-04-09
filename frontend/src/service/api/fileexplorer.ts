@@ -23,4 +23,17 @@ export const fileExplorerApi = {
         apiClient.post('/api/fileexplorer/paste-bulk', { items, destinationPath }),
     moveBulk: (items: string[], destinationPath: string) =>
         apiClient.post('/api/fileexplorer/move-bulk', { items, destinationPath }),
+    upload: (targetPath: string, files: File[]) => {
+        const formData = new FormData();
+        formData.append('targetPath', targetPath);
+
+        files.forEach((file) => {
+            formData.append('files', file);
+        });
+
+        return apiClient.fetch('/api/fileexplorer/upload', {
+            method: 'POST',
+            body: formData,
+        });
+    },
 };

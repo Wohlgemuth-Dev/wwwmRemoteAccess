@@ -4,13 +4,6 @@ import { FileItem } from './FileItem';
 
 const getItemKey = (item: FileItemType) => item.fullPath;
 
-const getItemNameFromPath = (itemPath: string) => {
-    const normalizedPath = itemPath.replace(/\\/g, '/');
-    const parts = normalizedPath.split('/').filter(Boolean);
-    
-    return [`/${parts.slice(0, -1).join('/')}`, parts[parts.length - 1] || itemPath];
-};
-
 type MenuPosition = {
     x: number;
     y: number;
@@ -22,6 +15,11 @@ interface FileGridProps {
     openItemMenuPath: string | null;
     openItemMenuPosition: MenuPosition | null;
     dragContext: DragContext;
+    externalDragHandlers: {
+        handleDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+        handleDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
+        handleDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+    };
     onCreateItem: (type: 'file' | 'folder', name: string) => void;
     onTileClick: (itemPath: string) => void;
     onTileDoubleClick: (item: FileItemType) => void;
@@ -43,6 +41,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
     openItemMenuPath,
     openItemMenuPosition,
     dragContext,
+    externalDragHandlers,
     onCreateItem,
     onTileClick,
     onTileDoubleClick,
@@ -77,6 +76,13 @@ export const FileGrid: React.FC<FileGridProps> = ({
         };
     };
 
+    const getItemNameFromPath = (itemPath: string) => {
+        const normalizedPath = itemPath.replace(/\\/g, '/');
+        const parts = normalizedPath.split('/').filter(Boolean);
+
+        return [`/${parts.slice(0, -1).join('/')}`, parts[parts.length - 1] || itemPath];
+    };
+
     const newNamePrompt = (itemPath: string): string | undefined => {
         const pathPlusName = getItemNameFromPath(itemPath);
         const promptValue = window.prompt('Enter new name:', pathPlusName[1]);
@@ -84,16 +90,8 @@ export const FileGrid: React.FC<FileGridProps> = ({
         const pathWithNewname = pathPlusName[0] ? `${pathPlusName[0]}/${newName}` : newName;
         return pathWithNewname?.trim() || undefined;
     };
-    const confirmDeletePrompt = (itemPaths: string[]): boolean => {
-        const itemNames = itemPaths.map(getItemNameFromPath).map(([, name]) => name);
-        return window.confirm(`Are you sure you want to delete the following items?\n\n${itemNames.join('\n')}`);
-    };
 
     const handleDeleteClick = () => {
-        if (!confirmDeletePrompt(menuTargetPaths)) {
-            return;
-        }
-
         onMenuAction('delete', menuTargetPaths);
     };
 
@@ -136,7 +134,14 @@ export const FileGrid: React.FC<FileGridProps> = ({
     }, [openItemMenuPath]);
 
     return (
-        <div className="file-explorer-content" onClick={handleContainerClick} onContextMenu={handleGridContextMenu}>
+        <div
+            className={`file-explorer-content${dragContext.isExternalDropActive ? ' is-external-drop-target' : ''}`}
+            onClick={handleContainerClick}
+            onContextMenu={handleGridContextMenu}
+            onDragOver={externalDragHandlers.handleDragOver}
+            onDragLeave={externalDragHandlers.handleDragLeave}
+            onDrop={externalDragHandlers.handleDrop}
+        >
             <div className="file-list" onClick={handleContainerClick} onContextMenu={handleGridContextMenu}>
                 {items.map((item) => {
                     const itemPath = getItemKey(item);

@@ -17,10 +17,16 @@ export class ApiError extends Error {
 
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const body = options.body;
+    const isFormDataBody = typeof FormData !== 'undefined' && body instanceof FormData;
+
     const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...options.headers as Record<string, string>,
+        ...(options.headers as Record<string, string>),
     };
+
+    if (!isFormDataBody && !headers['Content-Type']) {
+        headers['Content-Type'] = 'application/json';
+    }
 
     const token = sessionStorage.getItem('token');
     if (token) {

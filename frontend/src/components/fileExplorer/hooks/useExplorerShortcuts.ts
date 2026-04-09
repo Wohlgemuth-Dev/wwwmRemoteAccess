@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 interface UseExplorerShortcutsParams {
     selectedItemPaths: string[];
@@ -6,6 +6,7 @@ interface UseExplorerShortcutsParams {
     onSelectAll: () => void;
     onCopy: (paths: string[]) => void;
     onPaste: () => void;
+    onDelete: (paths: string[]) => void;
 }
 
 const isTypingIntoEditableElement = () => {
@@ -24,6 +25,7 @@ export const useExplorerShortcuts = ({
     onSelectAll,
     onCopy,
     onPaste,
+    onDelete,
 }: UseExplorerShortcutsParams) => {
     const latestStateRef = useRef({
         selectedItemPaths,
@@ -31,6 +33,7 @@ export const useExplorerShortcuts = ({
         onSelectAll,
         onCopy,
         onPaste,
+        onDelete,
     });
 
     useEffect(() => {
@@ -40,43 +43,55 @@ export const useExplorerShortcuts = ({
             onSelectAll,
             onCopy,
             onPaste,
+            onDelete,
         };
-    }, [selectedItemPaths, selectedCount, onSelectAll, onCopy, onPaste]);
+    }, [selectedItemPaths, selectedCount, onSelectAll, onCopy, onPaste, onDelete]);
 
-    useEffect(() => {
-        const handleShortcuts = (e: KeyboardEvent) => {
-            if (!(e.ctrlKey || e.metaKey) || isTypingIntoEditableElement()) {
+    const handleShortcuts = useCallback((e: React.KeyboardEvent) => {
+        if (isTypingIntoEditableElement()) {
+            return;
+        }
+
+        const { selectedItemPaths, selectedCount, onSelectAll, onCopy, onPaste, onDelete } = latestStateRef.current;
+
+        const key = e.key.toLowerCase();
+        if (key === 'delete' || key === 'backspace') {
+            if (selectedCount === 0) {
                 return;
             }
 
-            const { selectedItemPaths, selectedCount, onSelectAll, onCopy, onPaste } = latestStateRef.current;
+            e.preventDefault();
+            onDelete(selectedItemPaths);
+            return;
+        }
 
-            const key = e.key.toLowerCase();
-            if (key === 'a') {
-                e.preventDefault();
-                onSelectAll();
+        if (!(e.ctrlKey || e.metaKey)) {
+            return;
+        }
+
+        if (key === 'a') {
+            e.preventDefault();
+            onSelectAll();
+            return;
+        }
+
+        if (key === 'c') {
+            if (selectedCount === 0) {
                 return;
             }
 
-            if (key === 'c') {
-                if (selectedCount === 0) {
-                    return;
-                }
+            e.preventDefault();
+            onCopy(selectedItemPaths);
+            return;
+        }
 
-                e.preventDefault();
-                onCopy(selectedItemPaths);
-                return;
-            }
-
-            if (key === 'v') {
-                e.preventDefault();
-                onPaste();
-            }
-        };
-
-        window.addEventListener('keydown', handleShortcuts);
-        return () => {
-            window.removeEventListener('keydown', handleShortcuts);
-        };
+        if (key === 'v') {
+            e.preventDefault();
+            onPaste();
+        }
     }, []);
+
+    return {
+        handleShortcuts,
+    };
 };

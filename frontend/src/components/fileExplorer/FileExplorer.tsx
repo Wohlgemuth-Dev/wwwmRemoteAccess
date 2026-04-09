@@ -36,6 +36,7 @@ const sortFolderContents = <T extends SortableFileItem>(items: T[]) => {
 
 // Component
 const FileExplorer: React.FC = () => {
+    const explorerRootRef = useRef<HTMLDivElement>(null);
     const breadcrumbsRef = useRef<HTMLDivElement>(null);
 
     // Path Navigation
@@ -82,19 +83,36 @@ const FileExplorer: React.FC = () => {
         onDropToFolder: (sourceItemPaths, targetItem) => {
             fileOperations.handleMove(sourceItemPaths, targetItem.fullPath);
         },
+        onExternalFileDrop: fileOperations.handleUploadFiles,
     });
 
-    useExplorerShortcuts({
+    const explorerShortcuts = useExplorerShortcuts({
         selectedItemPaths: fileSelection.items.selectedItemPaths,
         selectedCount: fileSelection.items.selectedCount,
         onSelectAll: () => fileSelection.selectAll.handleSelectAllChange(true),
         onCopy: fileOperations.handleCopy,
         onPaste: fileOperations.handlePaste,
+        onDelete: fileOperations.handleDelete,
     });
+
+    const handleExplorerMouseDownCapture = (e: React.MouseEvent<HTMLDivElement>) => {
+        const target = e.target as HTMLElement | null;
+        if (target?.closest('input, textarea, button, [contenteditable="true"]')) {
+            return;
+        }
+
+        explorerRootRef.current?.focus();
+    };
 
     // Render
     return (
-        <div className="file-explorer">
+        <div
+            ref={explorerRootRef}
+            className="file-explorer"
+            tabIndex={-1}
+            onMouseDownCapture={handleExplorerMouseDownCapture}
+            onKeyDownCapture={explorerShortcuts.handleShortcuts}
+        >
             <FileExplorerNavBar
                 path={pathNavigation.path}
                 editing={pathNavigation.editing}
@@ -125,6 +143,7 @@ const FileExplorer: React.FC = () => {
                     openItemMenuPath={fileSelection.menu.openItemMenuPath}
                     openItemMenuPosition={fileSelection.menu.openItemMenuPosition}
                     dragContext={dragAndDrop.context}
+                    externalDragHandlers={dragAndDrop.external}
                     onCreateItem={fileOperations.handleCreateItem}
                     onTileClick={fileSelection.handlers.handleTileSelectionToggle}
                     onTileDoubleClick={pathNavigation.navigation.handleFolderOpen}
