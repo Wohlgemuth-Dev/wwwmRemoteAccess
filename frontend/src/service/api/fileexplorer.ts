@@ -13,6 +13,8 @@ export type NavigateResponse = {
 export const fileExplorerApi = {
     navigate: (path: string) =>
         apiClient.post<NavigateResponse>('/api/fileexplorer/navigate', { path }),
+    create: (parentPath: string, name: string, type: 'file' | 'folder') =>
+        apiClient.post('/api/fileexplorer/create', { parentPath, name, type }),
     deleteBulk: (paths: string[]) =>
         apiClient.post('/api/fileexplorer/delete-bulk', { paths }),
     rename: (oldPath: string, newPath: string) =>

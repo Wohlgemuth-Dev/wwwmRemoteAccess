@@ -45,6 +45,20 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
         // TODO: wire to upload flow when file selection/target directory is implemented.
     }, []);
 
+    const handleCreateItem = useCallback((type: 'file' | 'folder', name: string) => {
+        const trimmedName = name.trim();
+        if (!trimmedName) {
+            return;
+        }
+
+        fileExplorerApi.create(currentPath, trimmedName, type)
+        .then(() => {
+            handleRefresh();
+        }).catch((err) => {
+            console.error(`Failed to create ${type}`, err);
+        });
+    }, [currentPath, handleRefresh]);
+
     const handleDelete = useCallback((itemPaths: string[]) => {
         // TODO: implement delete logic once backend is wired.
         void itemPaths;
@@ -136,6 +150,7 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
         loading,
         error,
         handleRefresh,
+        handleCreateItem,
         handleDownload,
         handleUpload,
         handleDelete,
