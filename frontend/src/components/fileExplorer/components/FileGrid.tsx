@@ -22,6 +22,7 @@ interface FileGridProps {
     openItemMenuPath: string | null;
     openItemMenuPosition: MenuPosition | null;
     dragContext: DragContext;
+    onCreateItem: (type: 'file' | 'folder', name: string) => void;
     onTileClick: (itemPath: string) => void;
     onTileDoubleClick: (item: FileItemType) => void;
     onTileContextMenu: (itemPath: string) => (e: React.MouseEvent<HTMLDivElement>) => void;
@@ -42,6 +43,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
     openItemMenuPath,
     openItemMenuPosition,
     dragContext,
+    onCreateItem,
     onTileClick,
     onTileDoubleClick,
     onTileContextMenu,
@@ -55,6 +57,8 @@ export const FileGrid: React.FC<FileGridProps> = ({
     onItemDragEnd,
     isItemSelected,
 }) => {
+    const [openGridMenuPosition, setOpenGridMenuPosition] = React.useState<MenuPosition | null>(null);
+
     const menuTargetPaths =
         selectedItemPaths.length > 1
             ? selectedItemPaths
@@ -62,6 +66,16 @@ export const FileGrid: React.FC<FileGridProps> = ({
               ? [openItemMenuPath]
               : [];
     const isRenameDisabled = menuTargetPaths.length > 1;
+
+    const getMenuPosition = (e: React.MouseEvent<HTMLDivElement>, menuWidth: number, menuHeight: number): MenuPosition => {
+        const menuOffset = 6;
+        const maxX = Math.max(8, window.innerWidth - menuWidth - 8);
+        const maxY = Math.max(8, window.innerHeight - menuHeight - 8);
+        return {
+            x: Math.min(maxX, e.clientX + menuOffset),
+            y: Math.min(maxY, e.clientY + menuOffset),
+        };
+    };
 
     const newNamePrompt = (itemPath: string): string | undefined => {
         const pathPlusName = getItemNameFromPath(itemPath);
@@ -82,9 +96,48 @@ export const FileGrid: React.FC<FileGridProps> = ({
 
         onMenuAction('delete', menuTargetPaths);
     };
+
+    const handleGridContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (e.target !== e.currentTarget) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        onBlankAreaClick(e);
+        setOpenGridMenuPosition(getMenuPosition(e, 136, 86));
+    };
+
+    const closeGridMenu = () => {
+        setOpenGridMenuPosition(null);
+    };
+
+    const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        closeGridMenu();
+        onBlankAreaClick(e);
+    };
+
+    const handleCreateClick = (type: 'file' | 'folder') => {
+        const defaultName = type === 'file' ? 'new-file.txt' : 'New Folder';
+        const enteredName = window.prompt(type === 'file' ? 'Enter file name:' : 'Enter folder name:', defaultName)?.trim();
+
+        closeGridMenu();
+        if (!enteredName) {
+            return;
+        }
+
+        onCreateItem(type, enteredName);
+    };
+
+    React.useEffect(() => {
+        if (openItemMenuPath) {
+            closeGridMenu();
+        }
+    }, [openItemMenuPath]);
+
     return (
-        <div className="file-explorer-content" onClick={onBlankAreaClick}>
-            <div className="file-list" onClick={onBlankAreaClick}>
+        <div className="file-explorer-content" onClick={handleContainerClick} onContextMenu={handleGridContextMenu}>
+            <div className="file-list" onClick={handleContainerClick} onContextMenu={handleGridContextMenu}>
                 {items.map((item) => {
                     const itemPath = getItemKey(item);
                     const selected = isItemSelected(itemPath);
@@ -138,6 +191,22 @@ export const FileGrid: React.FC<FileGridProps> = ({
                     </button>
                     <button type="button" className="file-item-menu-item" onClick={() => onMenuAction('copy', menuTargetPaths)}>
                         Copy
+                    </button>
+                </div>
+            )}
+            {openGridMenuPosition && (
+                <div
+                    className="file-item-menu"
+                    role="menu"
+                    style={{ left: `${openGridMenuPosition.x}px`, top: `${openGridMenuPosition.y}px` }}
+                    onClick={(e) => e.stopPropagation()}
+                    onContextMenu={(e) => e.preventDefault()}
+                >
+                    <button type="button" className="file-item-menu-item" onClick={() => handleCreateClick('file')}>
+                        Add File
+                    </button>
+                    <button type="button" className="file-item-menu-item" onClick={() => handleCreateClick('folder')}>
+                        Add Folder
                     </button>
                 </div>
             )}
