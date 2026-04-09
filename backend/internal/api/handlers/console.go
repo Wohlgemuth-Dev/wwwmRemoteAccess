@@ -3,8 +3,6 @@ package handlers
 import (
 	"bufio"
 	"log"
-	"os/exec"
-	"syscall"
 
 	"github.com/gofiber/contrib/websocket"
 )
@@ -15,27 +13,12 @@ type ConsoleInput struct {
 }
 
 func ConsoleWebSocketHandler(c *websocket.Conn) {
-	username := c.Locals("username").(string)
-	uid := c.Locals("uid").(uint32)
-	gid := c.Locals("gid").(uint32)
-	homedir := c.Locals("homeDir").(string)
-
-	cmd := exec.Command("bash")
-
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Credential: &syscall.Credential{
-			Uid: uint32(uid),
-			Gid: uint32(gid),
-		},
+	cmd, err := SetupCmd(c, "bash")
+	if err != nil {
+		log.Printf("SetupCmd error: %v", err)
+		_ = c.WriteMessage(websocket.TextMessage, []byte("Error: Could not setup command\n"))
+		return
 	}
-
-	// Setup environment for the child process
-	cmd.Env = []string{
-		"HOME=" + homedir,
-		"USER=" + username,
-		"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-	}
-
 	stdinPipe, err := cmd.StdinPipe()
 	if err != nil {
 		log.Printf("Stdin pipe error: %v", err)

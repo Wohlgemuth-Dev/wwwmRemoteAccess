@@ -2,10 +2,11 @@ package fileexplorer
 
 import (
 	"fmt"
+	"log"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
+	"wwwmRemoteAccess/internal/api/handlers"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -17,9 +18,6 @@ type CreateRequest struct {
 }
 
 func CreateItem(c *fiber.Ctx) error {
-	uid := c.Locals("uid").(uint32)
-	gid := c.Locals("gid").(uint32)
-	username := c.Locals("username").(string)
 	homeDir := c.Locals("homeDir").(string)
 
 	var req CreateRequest
@@ -48,27 +46,24 @@ func CreateItem(c *fiber.Ctx) error {
 	targetPath := filepath.Join(parentPath, name)
 
 	var cmd *exec.Cmd
+	var err error
 	switch req.Type {
 	case "file":
-		cmd = exec.Command("touch", targetPath)
+		cmd, err = handlers.SetupCmd(c, "touch", targetPath)
+		if err != nil {
+			log.Printf("SetupCmd error: %v", err)
+			return err
+		}
 	case "folder":
-		cmd = exec.Command("mkdir", targetPath)
+		cmd, err = handlers.SetupCmd(c, "mkdir", targetPath)
+		if err != nil {
+			log.Printf("SetupCmd error: %v", err)
+			return err
+		}
 	default:
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid type",
 		})
-	}
-
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Credential: &syscall.Credential{
-			Uid: uid,
-			Gid: gid,
-		},
-	}
-	cmd.Env = []string{
-		"HOME=" + homeDir,
-		"USER=" + username,
-		"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 	}
 	if err := cmd.Run(); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

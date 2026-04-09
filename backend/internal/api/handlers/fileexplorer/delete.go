@@ -2,23 +2,19 @@ package fileexplorer
 
 import (
 	"fmt"
-	"os/exec"
+	"log"
 	"path/filepath"
-	"syscall"
+
+	"wwwmRemoteAccess/internal/api/handlers"
 
 	"github.com/gofiber/fiber/v2"
 )
 
+var body struct {
+	Paths []string `json:"paths"`
+}
+
 func DeleteBulkHandler(c *fiber.Ctx) error {
-	uid := c.Locals("uid").(uint32)
-	gid := c.Locals("gid").(uint32)
-	username := c.Locals("username").(string)
-	homeDir := c.Locals("homeDir").(string)
-
-	var body struct {
-		Paths []string `json:"paths"`
-	}
-
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
@@ -34,16 +30,10 @@ func DeleteBulkHandler(c *fiber.Ctx) error {
 
 	for _, item := range items {
 		item = filepath.Clean(item)
-		cmd := exec.Command("rm", "-rf", item)
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Credential: &syscall.Credential{
-				Uid: uid,
-				Gid: gid,
-			},
-		}
-		cmd.Env = []string{
-			"HOME=" + homeDir,
-			"USER=" + username,
+		cmd, err := handlers.SetupCmd(c, "rm", "-rf", item)
+		if err != nil {
+			log.Printf("SetupCmd error: %v", err)
+			return err
 		}
 		if err := cmd.Run(); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
