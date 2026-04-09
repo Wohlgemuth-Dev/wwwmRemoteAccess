@@ -41,6 +41,7 @@ interface FileExplorerNavBarProps {
     onDownload: (paths: string[]) => void;
     onCopy: (paths: string[]) => void;
     onPaste: () => void;
+    onSearch: (query: string) => void;
     dragContext: DragContext;
     breadcrumbDragHandlers: {
         handleDragOver: (e: React.DragEvent<HTMLButtonElement>) => void;
@@ -65,6 +66,7 @@ export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
     onDownload,
     onCopy,
     onPaste,
+    onSearch,
     dragContext,
     breadcrumbDragHandlers,
 }) => {
@@ -85,6 +87,7 @@ export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
                 canNavigateUp={navigation.canNavigateUp}
                 onNavigateUp={navigation.navigateUp}
                 onRefresh={onRefresh}
+                onSearch={onSearch}
                 dragContext={dragContext}
                 onBreadcrumbDragOver={breadcrumbDragHandlers.handleDragOver}
                 onBreadcrumbDragLeave={breadcrumbDragHandlers.handleDragLeave}

@@ -16,6 +16,7 @@ interface PathBarProps {
     canNavigateUp: boolean;
     onNavigateUp: () => void;
     onRefresh: () => void;
+    onSearch: (query: string) => void;
     dragContext: DragContext;
     onBreadcrumbDragOver: (e: React.DragEvent<HTMLButtonElement>) => void;
     onBreadcrumbDragLeave: (e: React.DragEvent<HTMLButtonElement>) => void;
@@ -38,6 +39,7 @@ export const PathBar: React.FC<PathBarProps> = ({
     canNavigateUp,
     onNavigateUp,
     onRefresh,
+    onSearch,
     dragContext,
     onBreadcrumbDragOver,
     onBreadcrumbDragLeave,
@@ -101,7 +103,16 @@ export const PathBar: React.FC<PathBarProps> = ({
                     </span>
                 )}
             </div>
-            <input className="search-input" type="text" placeholder={`Search ${currentFolder}`} />
+            <input 
+                className="search-input" 
+                type="text" 
+                placeholder={`Search ${currentFolder}`}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                        onSearch(e.currentTarget.value);
+                    }
+                }}
+            />
         </>
     );
 };

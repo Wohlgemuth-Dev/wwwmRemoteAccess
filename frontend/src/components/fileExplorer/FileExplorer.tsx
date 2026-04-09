@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import './FileExplorer.css';
 import { useExplorerShortcuts } from './hooks/useExplorerShortcuts';
 import { useFileOperations } from './hooks/useFileOperations';
@@ -42,6 +42,7 @@ const FileExplorer: React.FC = () => {
     const pathNavigation = usePathNavigation(DEFAULT_PATH, FALLBACK_FOLDER);
 
     const currentPath = pathNavigation.path.currentPath;
+    const [searchQuery, setSearchQuery] = useState('');
 
     const fileOperations = useFileOperations({
         currentPath,
@@ -55,8 +56,10 @@ const FileExplorer: React.FC = () => {
     // Folder contents
     const sortedFolderContents = useMemo(() => sortFolderContents(fileOperations.rawItems), [fileOperations.rawItems]);
     const folderContents = useMemo(
-        () => sortedFolderContents.map((item) => ({ ...item, fullPath: joinPathSegment(currentPath, item.name) })),
-        [sortedFolderContents, currentPath],
+        () => sortedFolderContents
+            .filter((item) => !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+            .map((item) => ({ ...item, fullPath: joinPathSegment(currentPath, item.name) })),
+        [sortedFolderContents, currentPath, searchQuery],
     );
     const allItemPaths = useMemo(() => folderContents.map(getItemKey), [folderContents]);
 
@@ -108,6 +111,7 @@ const FileExplorer: React.FC = () => {
                 onDownload={fileOperations.handleDownload}
                 onCopy={fileOperations.handleCopy}
                 onPaste={fileOperations.handlePaste}
+                onSearch={setSearchQuery}
                 dragContext={dragAndDrop.context}
                 breadcrumbDragHandlers={dragAndDrop.breadcrumb}
             />
