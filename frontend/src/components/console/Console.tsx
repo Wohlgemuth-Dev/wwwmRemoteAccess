@@ -15,6 +15,7 @@ const Console: React.FC = () => {
         { id: 1, text: 'Connecting to server...', type: 'output' },
     ]);
     const [inputValue, setInputValue] = useState('');
+    const [currentPath, setCurrentPath] = useState('~');
     const [commandHistory, setCommandHistory] = useState<string[]>([]);
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const lastLineRef = useRef<HTMLDivElement>(null);
@@ -35,10 +36,16 @@ const Console: React.FC = () => {
 
         ws.onopen = () => {
             setLines(prev => [...prev, { id: Date.now(), text: 'Connected to bash socket.', type: 'output' }]);
+            ws.send('echo "###CWD###$(pwd)"\n');
         };
 
         ws.onmessage = (event) => {
-            setLines(prev => [...prev, { id: Date.now(), text: event.data, type: 'output' }]);
+            const data = event.data;
+            if (typeof data === 'string' && data.startsWith('###CWD###')) {
+                setCurrentPath(data.replace('###CWD###', '').trim());
+            } else {
+                setLines(prev => [...prev, { id: Date.now(), text: data, type: 'output' }]);
+            }
         };
 
         ws.onerror = (error) => {
@@ -100,7 +107,7 @@ const Console: React.FC = () => {
         setHistoryIndex(-1);
 
         const newLineId = Date.now();
-        setLines((prev) => [...prev, { id: newLineId, text: `> ${command}`, type: 'input' }]);
+        setLines((prev) => [...prev, { id: newLineId, text: `${currentPath}>${command}`, type: 'input' }]);
 
         // Handle local commands first
         if (command.toLowerCase() === 'clear') {
@@ -111,7 +118,7 @@ const Console: React.FC = () => {
 
         // Send to WebSocket
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-            wsRef.current.send(command + '\n');
+            wsRef.current.send(command + '\necho "###CWD###$(pwd)"\n');
         } else {
             setLines((prev) => [...prev, { id: newLineId + 1, text: 'Error: WebSocket not connected', type: 'error' }]);
         }
@@ -133,7 +140,7 @@ const Console: React.FC = () => {
                 <div ref={lastLineRef} />
             </div>
             <div className="console-input-area">
-                <span className="console-prompt">&gt;</span>
+                <span className="console-prompt">${currentPath}&gt;</span>
                 <input
                     type="text"
                     className="console-input"
