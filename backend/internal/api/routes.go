@@ -30,6 +30,9 @@ func SetupRoutes(app *fiber.App) {
 
 	// File Explorer
 	api.Post("/fileexplorer/navigate", fileexplorer.NavigateHandler)
+	api.Post("/fileexplorer/delete-bulk", fileexplorer.DeleteBulkHandler)
+	api.Post("/fileexplorer/rename", fileexplorer.RenameItem)
+
 	api.Post("/fileexplorer/paste-bulk", fileexplorer.PasteBulkHandler)
 	api.Post("/fileexplorer/move-bulk", fileexplorer.MoveBulkHandler)
 

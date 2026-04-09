@@ -48,7 +48,13 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
     const handleDelete = useCallback((itemPaths: string[]) => {
         // TODO: implement delete logic once backend is wired.
         void itemPaths;
-    }, []);
+        fileExplorerApi.deleteBulk(itemPaths).then(() => {
+            console.log('Deleted items', itemPaths);
+            handleRefresh();
+        }).catch((err) => {            
+            console.error('Failed to delete items', itemPaths, err);
+        });
+    }, [currentPath]);
 
     const handleCopy = useCallback((itemPaths: string[]) => {
         // TODO: implement copy logic once backend is wired.
@@ -83,13 +89,21 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
         });
     }, [currentPath]);
 
-    const handleRename = useCallback((itemPath: string) => {
+    const handleRename = useCallback((itemPath: string, newPath: string) => {
         // TODO: implement rename logic once backend is wired.
         void itemPath;
-    }, []);
+        console.log('Renaming item', itemPath, "to", newPath);
+        fileExplorerApi.rename(itemPath, newPath)
+        .then(() => {
+            console.log('Renamed item', itemPath);
+            handleRefresh();
+        }).catch((err) => {
+            console.error('Failed to rename item', itemPath, err);
+        });
+    }, [currentPath]);
 
     const handleItemMenuAction = useCallback(
-        (action: ItemMenuAction, itemPaths: string[]) => {
+        (action: ItemMenuAction, itemPaths: string[], newName?: string) => {
             closeItemMenu();
 
             if (itemPaths.length === 0) {
@@ -99,7 +113,7 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
             console.log('Menu action', action, 'on items', itemPaths);
             switch (action) {
                 case 'rename':
-                    handleRename(itemPaths[0]);
+                    handleRename(itemPaths[0], newName || '');
                     break;
                 case 'download':
                     handleDownload(itemPaths);
