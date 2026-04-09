@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ItemMenuAction } from './types';
 import { fileExplorerApi } from '../../../service/api/fileexplorer';
+import { getItemNamesFromPaths } from '../utils';
 
 interface UseFileOperationsParams {
     currentPath: string;
@@ -10,19 +11,30 @@ interface UseFileOperationsParams {
 
 export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }: UseFileOperationsParams) => {
     const itemPathClipboardRef = useRef<string[]>([]);
+    const lastKnownPathRef = useRef(currentPath);
     const [rawItems, setRawItems] = useState<{ name: string; type: 'file' | 'folder' }[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    useEffect(() => {
+        if (currentPath) {
+            lastKnownPathRef.current = currentPath;
+        }
+    }, [currentPath]);
+
     const handleRefresh = useCallback(async () => {
+        const pathToRefresh = currentPath || lastKnownPathRef.current;
         setLoading(true);
         setError(null);
-        console.log('Refreshing folder contents for path', currentPath);
+        console.log('Refreshing folder contents for path', pathToRefresh);
         try {
-            const response = await fileExplorerApi.navigate(currentPath);
+            const response = await fileExplorerApi.navigate(pathToRefresh);
             setRawItems(response.items);
-            if (!currentPath && response.currentPath) {
+            if (!pathToRefresh && response.currentPath) {
                 setCurrentPath(response.currentPath);
+                lastKnownPathRef.current = response.currentPath;
+            } else if (pathToRefresh) {
+                lastKnownPathRef.current = pathToRefresh;
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load directory');
@@ -41,9 +53,35 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
         void itemPaths;
     }, []);
 
+    const handleUploadFiles = useCallback(async (files: File[]) => {
+        if (files.length === 0) {
+            return;
+        }
+
+        setError(null);
+        setLoading(true);
+
+        try {
+            await fileExplorerApi.upload(currentPath, files);
+            await handleRefresh();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to upload files');
+            setLoading(false);
+        }
+    }, [currentPath, handleRefresh]);
+
     const handleUpload = useCallback(() => {
-        // TODO: wire to upload flow when file selection/target directory is implemented.
-    }, []);
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.multiple = true;
+
+        fileInput.onchange = async () => {
+            const files = fileInput.files ? Array.from(fileInput.files) : [];
+            await handleUploadFiles(files);
+        };
+
+        fileInput.click();
+    }, [handleUploadFiles]);
 
     const handleCreateItem = useCallback((type: 'file' | 'folder', name: string) => {
         const trimmedName = name.trim();
@@ -60,15 +98,22 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
     }, [currentPath, handleRefresh]);
 
     const handleDelete = useCallback((itemPaths: string[]) => {
-        // TODO: implement delete logic once backend is wired.
-        void itemPaths;
+        if (itemPaths.length === 0) {
+            return;
+        }
+
+        const itemNames = getItemNamesFromPaths(itemPaths);
+        if (!window.confirm(`Are you sure you want to delete the following items?\n\n${itemNames.join('\n')}`)) {
+            return;
+        }
+
         fileExplorerApi.deleteBulk(itemPaths).then(() => {
             console.log('Deleted items', itemPaths);
             handleRefresh();
         }).catch((err) => {            
             console.error('Failed to delete items', itemPaths, err);
         });
-    }, [currentPath]);
+    }, [currentPath, handleRefresh]);
 
     const handleCopy = useCallback((itemPaths: string[]) => {
         // TODO: implement copy logic once backend is wired.
@@ -153,6 +198,7 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
         handleCreateItem,
         handleDownload,
         handleUpload,
+        handleUploadFiles,
         handleDelete,
         handleCopy,
         handlePaste,

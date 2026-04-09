@@ -11,13 +11,15 @@ type UseDragAndDropOptions = {
     getItemKey: (item: FileItem) => string;
     onDropToPath: (sourceItemPaths: string[], segmentPath: string) => void;
     onDropToFolder: (sourceItemPaths: string[], targetItem: FileItem) => void;
+    onExternalFileDrop: (files: File[]) => void | Promise<void>;
 };
 
-export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: UseDragAndDropOptions) => {
+export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder, onExternalFileDrop }: UseDragAndDropOptions) => {
     const [dragContext, setDragContext] = useState<DragContext>({
         draggedItemPaths: [],
         dropTargetType: null,
         dropTargetId: null,
+        isExternalDropActive: false,
     });
 
     const setDropTarget = (dropTargetType: DragContext['dropTargetType'], dropTargetId: string | null) => {
@@ -44,6 +46,20 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
                 draggedItemPaths: [],
                 dropTargetType: null,
                 dropTargetId: null,
+                isExternalDropActive: false,
+            };
+        });
+    };
+
+    const setExternalDropActive = (active: boolean) => {
+        setDragContext((prev) => {
+            if (prev.isExternalDropActive === active) {
+                return prev;
+            }
+
+            return {
+                ...prev,
+                isExternalDropActive: active,
             };
         });
     };
@@ -84,6 +100,7 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
             draggedItemPaths: itemsToMove,
             dropTargetType: null,
             dropTargetId: null,
+            isExternalDropActive: false,
         });
 
         e.dataTransfer.effectAllowed = 'move';
@@ -109,7 +126,7 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
     };
 
     const handleItemDrop = (targetItem: FileItem) => (e: React.DragEvent<HTMLDivElement>) => {
-        if (targetItem.type !== 'folder') return;
+        if (targetItem.type !== 'folder' || dragContext.draggedItemPaths.length === 0) return;
 
         e.preventDefault();
         e.stopPropagation();
@@ -128,6 +145,52 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
         clearDragContext();
     };
 
+    const isExternalFileDrag = (e: React.DragEvent<HTMLElement>) => {
+        if (dragContext.draggedItemPaths.length > 0) {
+            return false;
+        }
+
+        return Array.from(e.dataTransfer.types).includes('Files');
+    };
+
+    const handleExternalDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        if (!isExternalFileDrag(e)) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+        setExternalDropActive(true);
+    };
+
+    const handleExternalDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        if (!isExternalFileDrag(e)) {
+            return;
+        }
+
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+            setExternalDropActive(false);
+        }
+    };
+
+    const handleExternalDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        if (!isExternalFileDrag(e)) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        setExternalDropActive(false);
+
+        const files = Array.from(e.dataTransfer.files ?? []);
+        if (files.length === 0) {
+            return;
+        }
+
+        void onExternalFileDrop(files);
+    };
+
     return {
         // State
         context: dragContext,
@@ -144,6 +207,11 @@ export const useDragAndDrop = ({ getItemKey, onDropToPath, onDropToFolder }: Use
             handleDragLeave: handleItemDragLeave,
             handleDrop: handleItemDrop,
             handleDragEnd: handleItemDragEnd,
+        },
+        external: {
+            handleDragOver: handleExternalDragOver,
+            handleDragLeave: handleExternalDragLeave,
+            handleDrop: handleExternalDrop,
         },
     };
 };

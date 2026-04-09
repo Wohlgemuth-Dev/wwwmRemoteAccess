@@ -35,6 +35,7 @@ func SetupRoutes(app *fiber.App) {
 	api.Post("/fileexplorer/create", fileexplorer.CreateItem)
 	api.Post("/fileexplorer/paste-bulk", fileexplorer.PasteBulkHandler)
 	api.Post("/fileexplorer/move-bulk", fileexplorer.MoveBulkHandler)
+	api.Post("/fileexplorer/upload", fileexplorer.UploadHandler)
 
 	// Console WebSocket endpoint
 	api.Use("/console", func(c *fiber.Ctx) error {

@@ -15,4 +15,5 @@ export type DragContext = {
     draggedItemPaths: string[];
     dropTargetType: 'item' | 'breadcrumb' | null;
     dropTargetId: string | null;
+    isExternalDropActive: boolean;
 };
