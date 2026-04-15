@@ -53,7 +53,7 @@ export const FileItem: React.FC<FileItemProps> = ({
                 onClick={(e) => e.stopPropagation()}
             />
             <span className="file-icon">{item.type === 'folder' ? '📁' : '📄'}</span>
-            <span className="file-name">{item.name}</span>
+            <span className="file-name" title={item.name}>{item.name}</span>
         </div>
     );
 };
