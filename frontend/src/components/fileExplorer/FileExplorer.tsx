@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './FileExplorer.css';
+import { Toast } from '../Toast';
 import { useExplorerShortcuts } from './hooks/useExplorerShortcuts';
 import { useFileOperations } from './hooks/useFileOperations';
 import {
@@ -44,6 +45,7 @@ const FileExplorer: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [pathError, setPathError] = useState<string | null>(null);
     const [visibleError, setVisibleError] = useState<string | null>(null);
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     // For path input validation, we need a ref-based approach due to hook call order
     const validatedChangeRef = useRef<((path: string) => Promise<void>) | undefined>(undefined);
@@ -55,6 +57,10 @@ const FileExplorer: React.FC = () => {
         (newPath) => (validatedChangeRef.current?.(newPath) ?? Promise.resolve())
     );
 
+    const handleDownloadStart = useCallback((itemCount: number) => {
+        setToastMessage(`Downloading ${itemCount} item${itemCount === 1 ? '' : 's'}...`);
+    }, []);
+
     const fileOperations = useFileOperations({
         currentPath: pathNavigation.path.currentPath,
         setCurrentPath: pathNavigation.path.setCurrentPath,
@@ -62,7 +68,18 @@ const FileExplorer: React.FC = () => {
             fileSelection.menu.setOpenItemMenuPath(null);
             fileSelection.menu.setOpenItemMenuPosition(null);
         },
+        onDownloadStart: handleDownloadStart,
     });
+
+    // Auto-clear toast when download finishes
+    useEffect(() => {
+        if (!fileOperations.isDownloading && toastMessage) {
+            const timer = setTimeout(() => {
+                setToastMessage(null);
+            }, 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [fileOperations.isDownloading, toastMessage]);
 
     // Set up the validation callback for user-typed paths
     validatedChangeRef.current = useCallback(async (newPath: string) => {
@@ -157,60 +174,72 @@ const FileExplorer: React.FC = () => {
 
     // Render
     return (
-        <div
-            ref={explorerRootRef}
-            className="file-explorer"
-            tabIndex={-1}
-            onMouseDownCapture={handleExplorerMouseDownCapture}
-            onKeyDownCapture={explorerShortcuts.handleShortcuts}
-        >
-            <FileExplorerNavBar
-                path={pathNavigation.path}
-                editing={pathNavigation.editing}
-                navigation={pathNavigation.navigation}
-                pathHandlers={pathNavigation.handlers}
-                selection={fileSelection.items}
-                selectAll={fileSelection.selectAll}
-                breadcrumbsRef={breadcrumbsRef}
-                showScrollHintLeft={showScrollHintLeft}
-                showScrollHintRight={showScrollHintRight}
-                onRefresh={fileOperations.handleRefresh}
-                onUpload={fileOperations.handleUpload}
-                onDelete={fileOperations.handleDelete}
-                onDownload={fileOperations.handleDownload}
-                onCopy={fileOperations.handleCopy}
-                onPaste={fileOperations.handlePaste}
-                onSearch={setSearchQuery}
-                dragContext={dragAndDrop.context}
-                breadcrumbDragHandlers={dragAndDrop.breadcrumb}
-            />
-            {visibleError && <div className="file-explorer-error">{visibleError}</div>}
-            {fileOperations.loading ? (
-                <div className="file-explorer-loading">Loading...</div>
-            ) : (
-                <FileGrid
-                    items={folderContents}
-                    selectedItemPaths={fileSelection.items.selectedItemPaths}
-                    openItemMenuPath={fileSelection.menu.openItemMenuPath}
-                    openItemMenuPosition={fileSelection.menu.openItemMenuPosition}
+        <>
+            <div
+                ref={explorerRootRef}
+                className="file-explorer"
+                tabIndex={-1}
+                onMouseDownCapture={handleExplorerMouseDownCapture}
+                onKeyDownCapture={explorerShortcuts.handleShortcuts}
+            >
+                <FileExplorerNavBar
+                    path={pathNavigation.path}
+                    editing={pathNavigation.editing}
+                    navigation={pathNavigation.navigation}
+                    pathHandlers={pathNavigation.handlers}
+                    selection={fileSelection.items}
+                    selectAll={fileSelection.selectAll}
+                    breadcrumbsRef={breadcrumbsRef}
+                    showScrollHintLeft={showScrollHintLeft}
+                    showScrollHintRight={showScrollHintRight}
+                    onRefresh={fileOperations.handleRefresh}
+                    onUpload={fileOperations.handleUpload}
+                    onDelete={fileOperations.handleDelete}
+                    onDownload={fileOperations.handleDownload}
+                    onCopy={fileOperations.handleCopy}
+                    onPaste={fileOperations.handlePaste}
+                    onSearch={setSearchQuery}
                     dragContext={dragAndDrop.context}
-                    externalDragHandlers={dragAndDrop.external}
-                    onCreateItem={fileOperations.handleCreateItem}
-                    onTileClick={fileSelection.handlers.handleTileSelectionToggle}
-                    onTileDoubleClick={pathNavigation.navigation.handleFolderOpen}
-                    onTileContextMenu={fileSelection.handlers.handleItemContextMenu}
-                    onCheckboxChange={fileSelection.handlers.handleItemCheckboxChange}
-                    onMenuAction={fileOperations.handleItemMenuAction}
-                    onBlankAreaClick={fileSelection.handlers.handleBlankAreaClick}
-                    onItemDragStart={dragAndDrop.item.handleDragStart}
-                    onItemDragOver={dragAndDrop.item.handleDragOver}
-                    onItemDragLeave={dragAndDrop.item.handleDragLeave}
-                    onItemDrop={dragAndDrop.item.handleDrop}
-                    onItemDragEnd={dragAndDrop.item.handleDragEnd}
-                    isItemSelected={fileSelection.isItemSelected}
+                    breadcrumbDragHandlers={dragAndDrop.breadcrumb}
+                    isDownloading={fileOperations.isDownloading}
+                />
+                {visibleError && <div className="file-explorer-error">{visibleError}</div>}
+                {fileOperations.loading ? (
+                    <div className="file-explorer-loading">Loading...</div>
+                ) : (
+                    <FileGrid
+                        items={folderContents}
+                        selectedItemPaths={fileSelection.items.selectedItemPaths}
+                        openItemMenuPath={fileSelection.menu.openItemMenuPath}
+                        openItemMenuPosition={fileSelection.menu.openItemMenuPosition}
+                        dragContext={dragAndDrop.context}
+                        externalDragHandlers={dragAndDrop.external}
+                        onCreateItem={fileOperations.handleCreateItem}
+                        onTileClick={fileSelection.handlers.handleTileSelectionToggle}
+                        onTileDoubleClick={pathNavigation.navigation.handleFolderOpen}
+                        onTileContextMenu={fileSelection.handlers.handleItemContextMenu}
+                        onCheckboxChange={fileSelection.handlers.handleItemCheckboxChange}
+                        onMenuAction={fileOperations.handleItemMenuAction}
+                        onBlankAreaClick={fileSelection.handlers.handleBlankAreaClick}
+                        onItemDragStart={dragAndDrop.item.handleDragStart}
+                        onItemDragOver={dragAndDrop.item.handleDragOver}
+                        onItemDragLeave={dragAndDrop.item.handleDragLeave}
+                        onItemDrop={dragAndDrop.item.handleDrop}
+                        onItemDragEnd={dragAndDrop.item.handleDragEnd}
+                        isItemSelected={fileSelection.isItemSelected}
+                        isDownloading={fileOperations.isDownloading}
+                    />
+                )}
+            </div>
+            {toastMessage && (
+                <Toast
+                    message={toastMessage}
+                    type="info"
+                    duration={0}
+                    onDismiss={() => setToastMessage(null)}
                 />
             )}
-        </div>
+        </>
     );
 };
 

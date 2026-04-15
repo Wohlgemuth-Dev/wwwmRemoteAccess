@@ -9,6 +9,7 @@ interface SelectionBarProps {
     onDelete: (paths: string[]) => void;
     onDownload: (paths: string[]) => void;
     onCopy: (paths: string[]) => void;
+    isDownloading?: boolean;
 }
 
 export const SelectionBar: React.FC<SelectionBarProps> = ({
@@ -20,6 +21,7 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
     onDelete,
     onCopy,
     onDownload,
+    isDownloading = false,
 }) => {
     return (
         <>
@@ -60,11 +62,11 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
                 type="button"
                 className="nav-download-button"
                 onClick={() => onDownload(selectedItemPaths)}
-                disabled={selectedCount === 0}
-                title={selectedCount === 0 ? 'Select items to download' : `Download ${selectedCount} item(s)`}
+                disabled={selectedCount === 0 || isDownloading}
+                title={selectedCount === 0 ? 'Select items to download' : isDownloading ? 'Download in progress...' : `Download ${selectedCount} item(s)`}
             >
-                <span className="nav-download-icon">⇩</span>
-                <span className="nav-download-label">Download</span>
+                <span className="nav-download-icon">{isDownloading ? '⟳' : '⇩'}</span>
+                <span className="nav-download-label">{isDownloading ? 'Downloading...' : 'Download'}</span>
             </button>
         </>
     );

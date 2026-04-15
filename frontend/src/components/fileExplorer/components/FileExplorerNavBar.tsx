@@ -48,6 +48,7 @@ interface FileExplorerNavBarProps {
         handleDragLeave: (e: React.DragEvent<HTMLButtonElement>) => void;
         handleDrop: (e: React.DragEvent<HTMLButtonElement>) => void;
     };
+    isDownloading?: boolean;
 }
 
 export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
@@ -69,6 +70,7 @@ export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
     onSearch,
     dragContext,
     breadcrumbDragHandlers,
+    isDownloading,
 }) => {
     return (
         <div className="file-explorer-navbar">
@@ -103,6 +105,7 @@ export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
                 onDelete={onDelete}
                 onDownload={onDownload}
                 onCopy={onCopy}
+                isDownloading={isDownloading}
             />
             <button type="button" className="nav-upload-button" onClick={onUpload} title="Upload files">
                 <span className="nav-upload-icon">⇧</span>
