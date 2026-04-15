@@ -44,13 +44,46 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
         }
     }, [currentPath, setCurrentPath]);
 
+    const handleNavigateToPath = useCallback(async (newPath: string) => {
+        setError(null);
+        setLoading(true);
+
+        try {
+            await fileExplorerApi.navigate(newPath);
+            setCurrentPath(newPath);
+            lastKnownPathRef.current = newPath;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to navigate to path');
+        } finally {
+            setLoading(false);
+        }
+    }, [setCurrentPath]);
+
     useEffect(() => {
         handleRefresh();
     }, [handleRefresh]);
 
-    const handleDownload = useCallback((itemPaths: string[]) => {
-        // TODO: wire to backend download endpoint when file selection is implemented.
-        void itemPaths;
+    const handleDownload = useCallback(async (itemPaths: string[]) => {
+        if (itemPaths.length === 0) {
+            return;
+        }
+
+        setError(null);
+
+        try {
+            const { blob, fileName } = await fileExplorerApi.download(itemPaths);
+            const blobUrl = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+
+            anchor.href = blobUrl;
+            anchor.download = fileName;
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            URL.revokeObjectURL(blobUrl);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to download items');
+        }
     }, []);
 
     const handleUploadFiles = useCallback(async (files: File[]) => {
@@ -195,6 +228,7 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
         loading,
         error,
         handleRefresh,
+        handleNavigateToPath,
         handleCreateItem,
         handleDownload,
         handleUpload,

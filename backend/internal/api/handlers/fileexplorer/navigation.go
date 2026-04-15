@@ -1,7 +1,6 @@
 package fileexplorer
 
 import (
-	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -31,7 +30,7 @@ func NavigateHandler(c *fiber.Ctx) error {
 	var req NavigateRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Cannot parse JSON",
+			"error": "Invalid request format",
 		})
 	}
 
@@ -56,7 +55,7 @@ func NavigateHandler(c *fiber.Ctx) error {
 	output, err := cmd.Output()
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": fmt.Sprintf("Cannot list directory: %v", err),
+			"error": "Could not access this directory. Check that the path exists and you have permission to read it.",
 		})
 	}
 

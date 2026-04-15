@@ -40,6 +40,18 @@
     scrollbar-color: var(--border-strong) var(--surface-soft);
 }
 
+.file-explorer-error {
+    padding: 0.5rem 0.8rem;
+    border-left: 4px solid #a43434;
+    background: linear-gradient(180deg, rgba(10, 10, 14, 0.92), rgba(12, 12, 16, 0.82));
+    color: #a43434;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    box-sizing: border-box;
+}
+
 .file-explorer-content.is-external-drop-target {
     border: 1px dashed var(--accent-border);
     box-shadow: inset 0 0 0 1px rgba(123, 167, 214, 0.38);

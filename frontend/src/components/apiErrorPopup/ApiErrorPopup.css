@@ -1,0 +1,55 @@
+.api-error-popup-container {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 2200;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: min(420px, calc(100vw - 24px));
+}
+
+.api-error-popup {
+    background: linear-gradient(145deg, #3b0808 0%, #250404 100%);
+    color: #ffe4e4;
+    border: 1px solid #8a2424;
+    border-left: 4px solid #ff5757;
+    border-radius: 10px;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+    padding: 12px 14px;
+}
+
+.api-error-popup-title {
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+}
+
+.api-error-popup-message {
+    font-size: 0.94rem;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.api-error-popup-close {
+    margin-top: 10px;
+    border: 1px solid #cf6d6d;
+    background: transparent;
+    color: #ffd7d7;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.api-error-popup-close:hover {
+    background: rgba(255, 255, 255, 0.09);
+}
+
+@media (max-width: 640px) {
+    .api-error-popup-container {
+        top: 10px;
+        right: 10px;
+        width: calc(100vw - 20px);
+    }
+}

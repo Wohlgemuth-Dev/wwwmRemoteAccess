@@ -10,6 +10,24 @@ export type NavigateResponse = {
     items: FileItemResponse[];
 };
 
+const parseDownloadFileName = (contentDisposition: string | null) => {
+    if (!contentDisposition) {
+        return null;
+    }
+
+    const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf8Match?.[1]) {
+        return decodeURIComponent(utf8Match[1]);
+    }
+
+    const simpleMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+    if (simpleMatch?.[1]) {
+        return simpleMatch[1];
+    }
+
+    return null;
+};
+
 export const fileExplorerApi = {
     navigate: (path: string) =>
         apiClient.post<NavigateResponse>('/api/fileexplorer/navigate', { path }),
@@ -35,5 +53,19 @@ export const fileExplorerApi = {
             method: 'POST',
             body: formData,
         });
+    },
+    download: async (paths: string[]) => {
+        const response = await apiClient.fetchRaw('/api/fileexplorer/download', {
+            method: 'POST',
+            body: JSON.stringify({ paths }),
+        });
+
+        const blob = await response.blob();
+        const suggestedName = parseDownloadFileName(response.headers.get('content-disposition'));
+
+        return {
+            blob,
+            fileName: suggestedName || 'download.zip',
+        };
     },
 };

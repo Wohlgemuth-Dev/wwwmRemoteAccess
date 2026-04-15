@@ -23,7 +23,7 @@ func CreateItem(c *fiber.Ctx) error {
 	var req CreateRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Cannot parse JSON",
+			"error": "Invalid request format",
 		})
 	}
 
@@ -35,7 +35,7 @@ func CreateItem(c *fiber.Ctx) error {
 	}
 	if strings.Contains(name, "/") || strings.Contains(name, "\\") || name == "." || name == ".." {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid name",
+			"error": "Name cannot contain slashes or special path characters",
 		})
 	}
 
@@ -67,7 +67,7 @@ func CreateItem(c *fiber.Ctx) error {
 	}
 	if err := cmd.Run(); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": fmt.Sprintf("Failed to create %s: %v", targetPath, err),
+			"error": fmt.Sprintf("Could not create %s. Check that the name is not already in use and you have write permission.", name),
 		})
 	}
 

@@ -24,14 +24,14 @@ func UploadHandler(c *fiber.Ctx) error {
 	}
 	if err := mkdirCmd.Run(); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": fmt.Sprintf("Failed to prepare destination folder: %v", err),
+			"error": "Could not prepare the upload folder. Check that you have write permission.",
 		})
 	}
 
 	form, err := c.MultipartForm()
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid multipart form",
+			"error": "File upload format is invalid or files are too large",
 		})
 	}
 
@@ -46,7 +46,7 @@ func UploadHandler(c *fiber.Ctx) error {
 		src, err := fileHeader.Open()
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": fmt.Sprintf("Failed to read uploaded file %s: %v", fileHeader.Filename, err),
+				"error": fmt.Sprintf("Could not read file %s. The file may be corrupted or inaccessible.", fileHeader.Filename),
 			})
 		}
 
@@ -65,13 +65,13 @@ func UploadHandler(c *fiber.Ctx) error {
 		if runErr := writeCmd.Run(); runErr != nil {
 			src.Close()
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": fmt.Sprintf("Failed to save file %s: %v (%s)", targetFilePath, runErr, stderr.String()),
+				"error": fmt.Sprintf("Could not save file %s. Check that you have write permission and disk space is available.", fileHeader.Filename),
 			})
 		}
 
 		if closeErr := src.Close(); closeErr != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": fmt.Sprintf("Failed to close upload stream for %s: %v", fileHeader.Filename, closeErr),
+				"error": fmt.Sprintf("Upload was interrupted while processing %s. Please try again.", fileHeader.Filename),
 			})
 		}
 	}
