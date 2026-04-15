@@ -75,11 +75,10 @@ export const PathBar: React.FC<PathBarProps> = ({
                                     </span>
                                 )}
                                 <button
-                                    className={`path-segment${
-                                        dragContext.dropTargetType === 'breadcrumb' && dragContext.dropTargetId === segment.fullPath
-                                            ? ' is-drop-target'
-                                            : ''
-                                    }`}
+                                    className={`path-segment${dragContext.dropTargetType === 'breadcrumb' && dragContext.dropTargetId === segment.fullPath
+                                        ? ' is-drop-target'
+                                        : ''
+                                        }`}
                                     data-target-path={segment.fullPath}
                                     onClick={handlePathSegmentClick(segment.fullPath)}
                                     onDragOver={onBreadcrumbDragOver}
@@ -103,14 +102,12 @@ export const PathBar: React.FC<PathBarProps> = ({
                     </span>
                 )}
             </div>
-            <input 
-                className="search-input" 
-                type="text" 
+            <input
+                className="search-input"
+                type="text"
                 placeholder={`Search ${currentFolder}`}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                        onSearch(e.currentTarget.value);
-                    }
+                onChange={(e) => {
+                    onSearch(e.target.value);
                 }}
             />
         </>
