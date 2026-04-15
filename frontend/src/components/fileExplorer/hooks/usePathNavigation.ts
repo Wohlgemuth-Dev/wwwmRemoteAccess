@@ -32,7 +32,7 @@ const normalizePathInput = (value: string, fallbackPath: string) => {
     return trimmed.replace(/\/{2,}/g, '/');
 };
 
-export const usePathNavigation = (initialPath: string, fallbackFolder: string) => {
+export const usePathNavigation = (initialPath: string, fallbackFolder: string, onValidatedPathChange?: (path: string) => Promise<void>) => {
     const [currentPath, setCurrentPath] = useState(initialPath);
     const [isEditingPath, setIsEditingPath] = useState(false);
     const [pathDraft, setPathDraft] = useState(initialPath);
@@ -55,8 +55,17 @@ export const usePathNavigation = (initialPath: string, fallbackFolder: string) =
         }
     }, [currentPath, isEditingPath]);
 
-    const commitPathEdit = () => {
-        setCurrentPath(normalizePathInput(pathDraft, currentPath));
+    const commitPathEdit = async () => {
+        const normalizedPath = normalizePathInput(pathDraft, currentPath);
+        if (onValidatedPathChange) {
+            try {
+                await onValidatedPathChange(normalizedPath);
+            } catch {
+                // Error is handled by onValidatedPathChange callback
+            }
+        } else {
+            setCurrentPath(normalizedPath);
+        }
         setIsEditingPath(false);
     };
 

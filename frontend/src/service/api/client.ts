@@ -15,27 +15,29 @@ export class ApiError extends Error {
     }
 }
 
-
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+function buildRequestHeaders(options: RequestInit): Headers {
     const body = options.body;
     const isFormDataBody = typeof FormData !== 'undefined' && body instanceof FormData;
 
-    const headers: Record<string, string> = {
-        ...(options.headers as Record<string, string>),
-    };
+    const headers = new Headers(options.headers);
 
-    if (!isFormDataBody && !headers['Content-Type']) {
-        headers['Content-Type'] = 'application/json';
+    if (!isFormDataBody && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
     }
 
     const token = sessionStorage.getItem('token');
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+    if (token && !headers.has('Authorization')) {
+        headers.set('Authorization', `Bearer ${token}`);
     }
 
+    return headers;
+}
+
+
+async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const config: RequestInit = {
         ...options,
-        headers,
+        headers: buildRequestHeaders(options),
     };
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
@@ -61,4 +63,24 @@ export const apiClient = {
 
     // For raw fetch access (e.g. blobs)
     fetch: (endpoint: string, options: RequestInit = {}) => request<unknown>(endpoint, options),
+    fetchRaw: async (endpoint: string, options: RequestInit = {}) => {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            ...options,
+            headers: buildRequestHeaders(options),
+        });
+
+        if (!response.ok) {
+            let errorData: unknown;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                errorData = await response.json();
+            } else {
+                errorData = { error: response.statusText };
+            }
+
+            throw new ApiError(response.status, response.statusText, errorData);
+        }
+
+        return response;
+    },
 };

@@ -1,7 +1,6 @@
 package fileexplorer
 
 import (
-	"fmt"
 	"log"
 	"path/filepath"
 	"wwwmRemoteAccess/internal/api/handlers"
@@ -18,7 +17,7 @@ func RenameItem(c *fiber.Ctx) error {
 	var req RenameRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Cannot parse JSON",
+			"error": "Invalid request format",
 		})
 	}
 	oldPath := filepath.Clean(req.OldPath)
@@ -31,7 +30,7 @@ func RenameItem(c *fiber.Ctx) error {
 	}
 	if err := cmd.Run(); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": fmt.Sprintf("Failed to rename %s: %v", oldPath, err),
+			"error": "Could not rename item. The new name may already exist or you may not have permission.",
 		})
 	}
 

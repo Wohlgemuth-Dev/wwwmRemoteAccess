@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './FileExplorer.css';
 import { useExplorerShortcuts } from './hooks/useExplorerShortcuts';
 import { useFileOperations } from './hooks/useFileOperations';
@@ -11,6 +11,7 @@ import {
 import type { FileItem } from './hooks';
 import { FileExplorerNavBar, FileGrid } from './components';
 import { DEFAULT_PATH, FALLBACK_FOLDER } from './constants';
+import { fileExplorerApi } from '../../service/api/fileexplorer';
 
 // Pure helpers
 const joinPathSegment = (basePath: string, childName: string) => {
@@ -39,14 +40,23 @@ const FileExplorer: React.FC = () => {
     const explorerRootRef = useRef<HTMLDivElement>(null);
     const breadcrumbsRef = useRef<HTMLDivElement>(null);
 
-    // Path Navigation
-    const pathNavigation = usePathNavigation(DEFAULT_PATH, FALLBACK_FOLDER);
-
-    const currentPath = pathNavigation.path.currentPath;
+    // State
     const [searchQuery, setSearchQuery] = useState('');
+    const [pathError, setPathError] = useState<string | null>(null);
+    const [visibleError, setVisibleError] = useState<string | null>(null);
+
+    // For path input validation, we need a ref-based approach due to hook call order
+    const validatedChangeRef = useRef<((path: string) => Promise<void>) | undefined>(undefined);
+
+    // Create the path navigation hook with validation callback for path input
+    const pathNavigation = usePathNavigation(
+        DEFAULT_PATH,
+        FALLBACK_FOLDER,
+        (newPath) => (validatedChangeRef.current?.(newPath) ?? Promise.resolve())
+    );
 
     const fileOperations = useFileOperations({
-        currentPath,
+        currentPath: pathNavigation.path.currentPath,
         setCurrentPath: pathNavigation.path.setCurrentPath,
         closeItemMenu: () => {
             fileSelection.menu.setOpenItemMenuPath(null);
@@ -54,13 +64,54 @@ const FileExplorer: React.FC = () => {
         },
     });
 
+    // Set up the validation callback for user-typed paths
+    validatedChangeRef.current = useCallback(async (newPath: string) => {
+        setPathError(null);
+        try {
+            // Validate the path by attempting to navigate to it
+            await fileExplorerApi.navigate(newPath);
+            // If validation passes, update the path
+            pathNavigation.path.setCurrentPath(newPath);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to navigate to path';
+            setPathError(errorMessage);
+            throw err;  // Don't navigate if validation fails
+        }
+    }, [pathNavigation.path.setCurrentPath]);
+
+    // Auto-clear shown errors so the banner does not stick forever.
+    useEffect(() => {
+        const nextError = pathError || fileOperations.error;
+        if (!nextError) {
+            setVisibleError(null);
+            return;
+        }
+
+        setVisibleError(nextError);
+        const timeoutId = window.setTimeout(() => {
+            setVisibleError(null);
+        }, 5000);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [pathError, fileOperations.error]);
+
+    // Clear stale path-validation errors when a new API-backed refresh starts.
+    useEffect(() => {
+        if (fileOperations.loading) {
+            setPathError(null);
+            setVisibleError(null);
+        }
+    }, [fileOperations.loading]);
+
     // Folder contents
     const sortedFolderContents = useMemo(() => sortFolderContents(fileOperations.rawItems), [fileOperations.rawItems]);
     const folderContents = useMemo(
         () => sortedFolderContents
             .filter((item) => !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-            .map((item) => ({ ...item, fullPath: joinPathSegment(currentPath, item.name) })),
-        [sortedFolderContents, currentPath, searchQuery],
+            .map((item) => ({ ...item, fullPath: joinPathSegment(pathNavigation.path.currentPath, item.name) })),
+        [sortedFolderContents, pathNavigation.path.currentPath, searchQuery],
     );
     const allItemPaths = useMemo(() => folderContents.map(getItemKey), [folderContents]);
 
@@ -133,7 +184,7 @@ const FileExplorer: React.FC = () => {
                 dragContext={dragAndDrop.context}
                 breadcrumbDragHandlers={dragAndDrop.breadcrumb}
             />
-            {fileOperations.error && <div className="file-explorer-error">{fileOperations.error}</div>}
+            {visibleError && <div className="file-explorer-error">{visibleError}</div>}
             {fileOperations.loading ? (
                 <div className="file-explorer-loading">Loading...</div>
             ) : (
