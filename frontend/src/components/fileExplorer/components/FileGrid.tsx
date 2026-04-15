@@ -33,6 +33,7 @@ interface FileGridProps {
     onItemDrop: (item: FileItemType) => (e: React.DragEvent<HTMLDivElement>) => void;
     onItemDragEnd: () => void;
     isItemSelected: (itemPath: string) => boolean;
+    isDownloading?: boolean;
 }
 
 export const FileGrid: React.FC<FileGridProps> = ({
@@ -55,6 +56,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
     onItemDrop,
     onItemDragEnd,
     isItemSelected,
+    isDownloading,
 }) => {
     const [openGridMenuPosition, setOpenGridMenuPosition] = React.useState<MenuPosition | null>(null);
 
@@ -185,7 +187,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                     >
                         Rename
                     </button>
-                    <button type="button" className="file-item-menu-item" onClick={() => onMenuAction('download', menuTargetPaths)}>
+                    <button type="button" className="file-item-menu-item" onClick={() => onMenuAction('download', menuTargetPaths)} disabled={isDownloading}>
                         Download
                     </button>
                     <button 

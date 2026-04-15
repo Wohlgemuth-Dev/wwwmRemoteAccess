@@ -7,14 +7,16 @@ interface UseFileOperationsParams {
     currentPath: string;
     setCurrentPath: (path: string) => void;
     closeItemMenu: () => void;
+    onDownloadStart?: (itemCount: number) => void;
 }
 
-export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }: UseFileOperationsParams) => {
+export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu, onDownloadStart }: UseFileOperationsParams) => {
     const itemPathClipboardRef = useRef<string[]>([]);
     const lastKnownPathRef = useRef(currentPath);
     const [rawItems, setRawItems] = useState<{ name: string; type: 'file' | 'folder' }[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     useEffect(() => {
         if (currentPath) {
@@ -68,7 +70,8 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
             return;
         }
 
-        setError(null);
+        setIsDownloading(true);
+        onDownloadStart?.(itemPaths.length);
 
         try {
             const { blob, fileName } = await fileExplorerApi.download(itemPaths);
@@ -83,8 +86,10 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
             URL.revokeObjectURL(blobUrl);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to download items');
+        } finally {
+            setIsDownloading(false);
         }
-    }, []);
+    }, [onDownloadStart]);
 
     const handleUploadFiles = useCallback(async (files: File[]) => {
         if (files.length === 0) {
@@ -227,6 +232,7 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu }
         rawItems,
         loading,
         error,
+        isDownloading,
         handleRefresh,
         handleNavigateToPath,
         handleCreateItem,
