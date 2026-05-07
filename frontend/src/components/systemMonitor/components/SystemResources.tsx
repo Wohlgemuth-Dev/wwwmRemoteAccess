@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import DeviceMetricChart, { type ChartAxes } from './DeviceMetricChart';
+import ResourceDetailMetrics from './ResourceDetailMetrics';
 import { useSystemMetrics, type ResourceKey } from '../metrics';
 
 interface ResourceInfo {
     key: ResourceKey;
     title: string;
-    summary: string;
     detailTitle: string;
     detailText: string;
     color: string;
@@ -20,7 +20,6 @@ const resources: ResourceInfo[] = [
     {
         key: 'cpu',
         title: 'CPU Usage',
-        summary: 'Current CPU usage: 45%',
         detailTitle: 'CPU Details',
         detailText: 'CPU load is moderate. Top processes and per-core utilization will be shown here.',
         color: '#7ba7d6',
@@ -33,7 +32,6 @@ const resources: ResourceInfo[] = [
     {
         key: 'memory',
         title: 'Memory Usage',
-        summary: 'Current memory usage: 60%',
         detailTitle: 'Memory Details',
         detailText: 'Memory usage is stable. Breakdown by process and cache usage will be shown here.',
         color: '#7dd3fc',
@@ -46,7 +44,6 @@ const resources: ResourceInfo[] = [
     {
         key: 'disk',
         title: 'Disk Usage',
-        summary: 'Current disk usage: 70%',
         detailTitle: 'Disk Details',
         detailText: 'Disk utilization is elevated. Partition usage and IO activity will be shown here.',
         color: '#fbbf24',
@@ -59,7 +56,6 @@ const resources: ResourceInfo[] = [
     {
         key: 'network',
         title: 'Network Usage',
-        summary: 'Current network usage: 20 Mbps',
         detailTitle: 'Network Details',
         detailText: 'Network throughput is healthy. Interface traffic and connection details will be shown here.',
         color: '#34d399',
@@ -129,6 +125,7 @@ const SystemResources: React.FC = () => {
                         unit={selectedDetail.unit}
                     />
                 </div>
+                <ResourceDetailMetrics resourceKey={selectedDetail.key} />
             </div>
         </div>
     );

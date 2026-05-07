@@ -10,6 +10,16 @@ import {
 	YAxis,
 } from 'recharts';
 
+const HEX_TO_RGBA = (hex: string, alpha = 1) => {
+	const h = hex.replace('#', '');
+	const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+	const bigint = parseInt(full, 16);
+	const r = (bigint >> 16) & 255;
+	const g = (bigint >> 8) & 255;
+	const b = bigint & 255;
+	return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 export interface ChartAxes {
 	xLabel: string;
 	yLabel: string;
@@ -58,16 +68,6 @@ const DeviceMetricChart = ({
 
 	const gradId = useMemo(() => `grad-${Math.random().toString(36).slice(2, 9)}`, []);
 
-	const hexToRgba = (hex: string, alpha = 1) => {
-		const h = hex.replace('#', '');
-		const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
-		const bigint = parseInt(full, 16);
-		const r = (bigint >> 16) & 255;
-		const g = (bigint >> 8) & 255;
-		const b = bigint & 255;
-		return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-	};
-
 	const axisLabelStyle = useMemo(
 		() => ({
 			fill: 'var(--text-muted)',
@@ -99,15 +99,15 @@ const DeviceMetricChart = ({
 
 	return (
 		<div className={`DeviceMetricChart${compact ? ' is-compact' : ''}`}>
-			<ResponsiveContainer width="100%" height={compact ? 48 : '100%'}>
-				<AreaChart data={data ?? internalData} margin={{ top: 8, right: 8, bottom: compact ? 0 : 12, left: compact ? 0 : 8 }}>
+			<ResponsiveContainer width="100%" height="100%">
+				<AreaChart data={data ?? internalData} margin={{ top: compact ? 0 : 8, right: compact ? 0 : 8, bottom: compact ? 0 : 12, left: compact ? 0 : 8 }}>
 					<defs>
 						<linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
-							<stop offset="0%" stopColor={hexToRgba(color, 0.4)} />
-							<stop offset="100%" stopColor={hexToRgba(color, 0.08)} />
+							<stop offset="0%" stopColor={HEX_TO_RGBA(color, 0.4)} />
+							<stop offset="100%" stopColor={HEX_TO_RGBA(color, 0.08)} />
 						</linearGradient>
 					</defs>
-					<CartesianGrid stroke="rgba(255, 255, 255, 0.08)" strokeDasharray="3 3" vertical={false} />
+					{!compact && <CartesianGrid stroke="rgba(255, 255, 255, 0.08)" strokeDasharray="3 3" vertical={false} />}
 					<XAxis
 						dataKey="index"
 						hide={compact}
@@ -141,7 +141,7 @@ const DeviceMetricChart = ({
 						dataKey="value"
 						fill={`url(#${gradId})`}
 						stroke="none"
-						isAnimationActive={!compact}
+						isAnimationActive={false}
 					/>
 					<Line
 						type="monotone"
@@ -150,7 +150,7 @@ const DeviceMetricChart = ({
 						strokeWidth={compact ? 2 : 2.5}
 						dot={false}
 						activeDot={{ r: compact ? 2.5 : 4, stroke: color, strokeWidth: 2, fill: 'var(--ra-panel-bg)' }}
-						isAnimationActive={!compact}
+						isAnimationActive={false}
 					/>
 				</AreaChart>
 			</ResponsiveContainer>

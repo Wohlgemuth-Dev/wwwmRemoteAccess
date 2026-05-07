@@ -6,6 +6,9 @@ import ProcessManager from './components/ProcessManager';
 
 type MonitorPanel = 'resources' | 'processes';
 
+const RESPONSIVE_BREAKPOINT_DESKTOP = 1050;
+const TOUCH_SWIPE_THRESHOLD = 44;
+
 const SystemMonitor: React.FC = () => {
     const [activePanel, setActivePanel] = useState<MonitorPanel>('resources');
     const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -16,7 +19,7 @@ const SystemMonitor: React.FC = () => {
     };
 
     const handleTouchEnd: React.TouchEventHandler<HTMLDivElement> = (event) => {
-        if (window.innerWidth > 1050 || !touchStartRef.current) {
+        if (window.innerWidth > RESPONSIVE_BREAKPOINT_DESKTOP || !touchStartRef.current) {
             touchStartRef.current = null;
             return;
         }
@@ -24,9 +27,8 @@ const SystemMonitor: React.FC = () => {
         const touch = event.changedTouches[0];
         const deltaX = touch.clientX - touchStartRef.current.x;
         const deltaY = touch.clientY - touchStartRef.current.y;
-        const horizontalSwipeThreshold = 44;
 
-        if (Math.abs(deltaX) >= horizontalSwipeThreshold && Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (Math.abs(deltaX) >= TOUCH_SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY)) {
             if (deltaX < 0) {
                 setActivePanel('processes');
             } else {
