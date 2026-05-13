@@ -4,7 +4,7 @@ import { useAuth } from '../../service/AuthContext';
 import { API_BASE_URL } from '../../service/api/client';
 
 interface ConsoleLine {
-    id: number;
+    id: string | number;
     text: string;
     type: 'input' | 'output' | 'error';
 }
@@ -12,14 +12,37 @@ interface ConsoleLine {
 const Console: React.FC = () => {
     const { token } = useAuth();
     const [lines, setLines] = useState<ConsoleLine[]>([
-        { id: 1, text: 'Connecting to server...', type: 'output' },
+        { id: crypto.randomUUID(), text: 'Connecting to server...', type: 'output' },
     ]);
     const [inputValue, setInputValue] = useState('');
     const [currentPath, setCurrentPath] = useState('~');
     const [commandHistory, setCommandHistory] = useState<string[]>([]);
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const lastLineRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLSpanElement>(null);
     const wsRef = useRef<WebSocket | null>(null);
+
+    // Sync contentEditable with inputValue state programmatically and maintain cursor
+    useEffect(() => {
+        if (inputRef.current && inputRef.current.textContent !== inputValue) {
+            inputRef.current.textContent = inputValue;
+
+            // Only move cursor if the element is focused
+            if (document.activeElement === inputRef.current) {
+                const range = document.createRange();
+                const sel = window.getSelection();
+                range.selectNodeContents(inputRef.current);
+                range.collapse(false);
+                sel?.removeAllRanges();
+                sel?.addRange(range);
+            }
+        }
+    }, [inputValue]);
+
+    // Auto-focus input on mount
+    useEffect(() => {
+        inputRef.current?.focus();
+    }, []);
 
     // Initialize WebSocket connection
     useEffect(() => {
@@ -27,6 +50,9 @@ const Console: React.FC = () => {
             console.log("WebSocket: waiting for token...");
             return;
         }
+
+        // Flag to prevent adding error messages to state when the component unmounts
+        let isCleaningUp = false;
         const wsUrl = `${API_BASE_URL.replace("http://", "ws://")}/api/console`;
 
         // Sends token via Subprotocol
@@ -35,7 +61,7 @@ const Console: React.FC = () => {
         wsRef.current = ws;
 
         ws.onopen = () => {
-            setLines(prev => [...prev, { id: Date.now(), text: 'Connected to bash socket.', type: 'output' }]);
+            setLines(prev => [...prev, { id: crypto.randomUUID(), text: 'Connected to bash socket.', type: 'output' }]);
             ws.send('echo "###CWD###$(pwd)"\n');
         };
 
@@ -44,20 +70,23 @@ const Console: React.FC = () => {
             if (typeof data === 'string' && data.startsWith('###CWD###')) {
                 setCurrentPath(data.replace('###CWD###', '').trim());
             } else {
-                setLines(prev => [...prev, { id: Date.now(), text: data, type: 'output' }]);
+                setLines(prev => [...prev, { id: crypto.randomUUID(), text: data, type: 'output' }]);
             }
         };
 
         ws.onerror = (error) => {
+            if (isCleaningUp) return;
             console.error("WebSocket error:", error);
-            setLines(prev => [...prev, { id: Date.now(), text: 'Error connecting to socket.', type: 'error' }]);
+            setLines(prev => [...prev, { id: crypto.randomUUID(), text: 'Error connecting to socket.', type: 'error' }]);
         };
 
         ws.onclose = () => {
-            setLines(prev => [...prev, { id: Date.now(), text: 'Connection closed.', type: 'error' }]);
+            if (isCleaningUp) return;
+            setLines(prev => [...prev, { id: crypto.randomUUID(), text: 'Connection closed.', type: 'error' }]);
         };
 
         return () => {
+            isCleaningUp = true;
             ws.close();
         };
     }, [token]);
@@ -70,8 +99,9 @@ const Console: React.FC = () => {
     }, [lines]);
 
     //Handles command posting and history navigation
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
         if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent inserting newline in contentEditable
             const command = inputValue.trim();
             addCommand(command);
         } else if (e.key === 'ArrowUp') {
@@ -106,8 +136,7 @@ const Console: React.FC = () => {
         });
         setHistoryIndex(-1);
 
-        const newLineId = Date.now();
-        setLines((prev) => [...prev, { id: newLineId, text: `${currentPath}>${command}`, type: 'input' }]);
+        setLines((prev) => [...prev, { id: crypto.randomUUID(), text: `${currentPath}>${command}`, type: 'input' }]);
 
         // Handle local commands first
         if (command.toLowerCase() === 'clear') {
@@ -120,14 +149,32 @@ const Console: React.FC = () => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current.send(command + '\necho "###CWD###$(pwd)"\n');
         } else {
-            setLines((prev) => [...prev, { id: newLineId + 1, text: 'Error: WebSocket not connected', type: 'error' }]);
+            setLines((prev) => [...prev, { id: crypto.randomUUID(), text: 'Error: WebSocket not connected', type: 'error' }]);
         }
 
         setInputValue('');
     };
 
     return (
-        <div className="console-container">
+        <div
+            className="console-container"
+            onClick={() => {
+                // Only focus if the user is not trying to select text
+                if (window.getSelection()?.toString() === '') {
+                    if (inputRef.current) {
+                        inputRef.current.focus();
+
+                        // Move cursor to the end
+                        const range = document.createRange();
+                        const sel = window.getSelection();
+                        range.selectNodeContents(inputRef.current);
+                        range.collapse(false); // false means collapse to end
+                        sel?.removeAllRanges();
+                        sel?.addRange(range);
+                    }
+                }
+            }}
+        >
             <div className="console-header">
                 <span>Terminal</span>
             </div>
@@ -141,14 +188,14 @@ const Console: React.FC = () => {
             </div>
             <div className="console-input-area">
                 <span className="console-prompt">${currentPath}&gt;</span>
-                <input
-                    type="text"
+                <span
+                    ref={inputRef}
                     className="console-input"
-                    // uses the string that is inputed in the input field for command input
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
+                    contentEditable
+                    suppressContentEditableWarning
+                    onInput={(e) => setInputValue(e.currentTarget.textContent || '')}
                     onKeyDown={handleKeyDown}
-                    autoFocus
+                    style={{ outline: 'none' }}
                 />
             </div>
         </div>
