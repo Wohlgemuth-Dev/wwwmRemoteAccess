@@ -170,6 +170,27 @@
     background: rgba(8, 8, 10, 0.45);
 }
 
+.file-item-size {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    height: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.35rem;
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: #fff;
+    background: rgba(8, 8, 10, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    pointer-events: none;
+    z-index: 2;
+}
+
 .file-item-menu {
     position: fixed;
     min-width: 7rem;
