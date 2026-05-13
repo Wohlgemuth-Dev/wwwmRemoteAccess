@@ -26,7 +26,7 @@ const Console: React.FC = () => {
     useEffect(() => {
         if (inputRef.current && inputRef.current.textContent !== inputValue) {
             inputRef.current.textContent = inputValue;
-            
+
             // Only move cursor if the element is focused
             if (document.activeElement === inputRef.current) {
                 const range = document.createRange();
@@ -50,6 +50,9 @@ const Console: React.FC = () => {
             console.log("WebSocket: waiting for token...");
             return;
         }
+
+        // Flag to prevent adding error messages to state when the component unmounts
+        let isCleaningUp = false;
         const wsUrl = `${API_BASE_URL.replace("http://", "ws://")}/api/console`;
 
         // Sends token via Subprotocol
@@ -72,15 +75,18 @@ const Console: React.FC = () => {
         };
 
         ws.onerror = (error) => {
+            if (isCleaningUp) return;
             console.error("WebSocket error:", error);
             setLines(prev => [...prev, { id: crypto.randomUUID(), text: 'Error connecting to socket.', type: 'error' }]);
         };
 
         ws.onclose = () => {
+            if (isCleaningUp) return;
             setLines(prev => [...prev, { id: crypto.randomUUID(), text: 'Connection closed.', type: 'error' }]);
         };
 
         return () => {
+            isCleaningUp = true;
             ws.close();
         };
     }, [token]);
@@ -150,14 +156,14 @@ const Console: React.FC = () => {
     };
 
     return (
-        <div 
-            className="console-container" 
+        <div
+            className="console-container"
             onClick={() => {
                 // Only focus if the user is not trying to select text
                 if (window.getSelection()?.toString() === '') {
                     if (inputRef.current) {
                         inputRef.current.focus();
-                        
+
                         // Move cursor to the end
                         const range = document.createRange();
                         const sel = window.getSelection();
