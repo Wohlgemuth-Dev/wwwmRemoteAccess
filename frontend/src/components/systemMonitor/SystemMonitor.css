@@ -104,6 +104,10 @@
 .ProcessManager {
 	min-width: 0;
 	height: 100%;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
 }
 
 .SystemResources {
@@ -351,7 +355,6 @@
 
 .ProcessManagerHeader {
 	padding: 0.95rem;
-	border-bottom: 1px solid var(--border-soft);
 }
 
 .ProcessManagerHeader h1 {
@@ -361,9 +364,14 @@
 }
 
 .ProcessTable {
-	height: 100%;
+	flex: 1;
+	min-height: 0;
+	height: auto;
 	overflow: auto;
 	background: var(--ra-control-bg);
+	border: 1px solid var(--border-soft);
+	border-radius: 12px;
+	background-clip: padding-box;
 	padding-right: 0.2rem;
 	scrollbar-width: thin;
 	scrollbar-color: var(--border-strong) var(--surface-soft);
@@ -371,8 +379,10 @@
 
 .ProcessTable table {
 	width: 100%;
-	border-collapse: collapse;
+	border-collapse: separate;
+	border-spacing: 0;
 	background: var(--ra-control-bg);
+	border-radius: inherit;
 	font-size: 0.9rem;
 }
 
@@ -380,10 +390,9 @@
 	position: sticky;
 	top: 0;
 	z-index: 20;
-	background: var(--ra-control-bg);
-	background-color: var(--ra-control-bg);
+	background: #050505;
+	background-color: #050505;
 	border-bottom: 1px solid var(--border-strong);
-	box-shadow: 0 8px 18px var(--ra-shadow-overlay);
 }
 
 .ProcessTable thead tr {
@@ -399,13 +408,21 @@
 	font-weight: 500;
 	color: var(--text-primary);
 	border-right: 1px solid var(--border-soft);
-	background: var(--ra-control-bg);
-	background-color: var(--ra-control-bg);
+	background: #050505;
+	background-color: #050505;
 	user-select: none;
 }
 
 .ProcessTable th:last-child {
 	border-right: none;
+}
+
+.ProcessTable th:first-child {
+	border-top-left-radius: 12px;
+}
+
+.ProcessTable th:last-child {
+	border-top-right-radius: 12px;
 }
 
 .ProcessTableHeader {
@@ -420,10 +437,20 @@
 	padding: 0.65rem 0.75rem;
 	display: flex;
 	align-items: center;
+	justify-content: center;
 	gap: 0.4rem;
 	width: 100%;
-	justify-content: space-around; /* use space-around per request */
 	transition: color 120ms ease;
+}
+
+.ProcessTableHeaderLabel {
+	text-align: center;
+}
+
+.ProcessTableHeaderArrow {
+	min-width: 1.2rem;
+	text-align: right;
+	margin-left: auto;
 }
 
 .ProcessTableHeader:hover {
@@ -499,11 +526,12 @@
 	color: var(--text-muted);
 	cursor: pointer;
 	font-size: 0.75rem;
-	padding: 0.2rem;
+	padding: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	min-width: 1.2rem;
+	width: 1.2rem;
+	height: 1.2rem;
 	transition: color 120ms ease, transform 120ms ease;
 	flex-shrink: 0;
 }
@@ -517,8 +545,11 @@
 }
 
 .ExpandTogglePlaceholder {
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	width: 1.2rem;
+	height: 1.2rem;
 	flex-shrink: 0;
 }
 
@@ -531,7 +562,7 @@
 .ProcessPidCell,
 .ProcessCpuCell,
 .ProcessMemoryCell {
-	text-align: right;
+	text-align: left;
 	min-width: 80px;
 }
 
@@ -572,35 +603,6 @@
 	background: var(--status-zombie-soft);
 	border-color: var(--status-zombie-border);
 	color: var(--status-zombie);
-}
-
-/* Context menu for process rows */
-.RowContextMenu {
-	position: fixed;
-	background: var(--surface);
-	border: 1px solid var(--border-soft);
-	padding: 0.25rem 0.25rem;
-	border-radius: 6px;
-	z-index: 60;
-	box-shadow: 0 6px 24px rgba(0,0,0,0.12);
-	min-width: 120px;
-}
-
-.ContextMenuItem {
-	appearance: none;
-	background: none;
-	border: none;
-	width: 100%;
-	text-align: left;
-	padding: 0.5rem 0.6rem;
-	cursor: pointer;
-	font: inherit;
-	color: var(--text-primary);
-	border-radius: 4px;
-}
-
-.ContextMenuItem:hover {
-	background: color-mix(in srgb, var(--surface-hover-mid) 40%, var(--surface));
 }
 
 .ProcessTable::-webkit-scrollbar {

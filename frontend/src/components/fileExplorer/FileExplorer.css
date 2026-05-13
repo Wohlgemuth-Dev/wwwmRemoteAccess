@@ -196,57 +196,6 @@
     background: var(--surface-charcoal);
 }
 
-.file-item-menu {
-    position: fixed;
-    min-width: 7rem;
-    padding: 0.25rem;
-    border: 1px solid var(--border-overlay);
-    border-radius: 8px;
-    background: var(--surface-overlay);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 8px 20px var(--shadow-overlay);
-    z-index: 120;
-    animation: menu-enter 120ms ease-out;
-}
-
-@keyframes menu-enter {
-    from {
-        opacity: 0;
-        transform: translateY(-3px) scale(0.98);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-.file-item-menu-item {
-    width: 100%;
-    border: none;
-    background: transparent;
-    color: var(--text-high);
-    text-align: left;
-    padding: 0.35rem 0.45rem;
-    border-radius: 6px;
-    font-size: 0.84rem;
-    line-height: 1.2;
-    cursor: pointer;
-}
-
-.file-item-menu-item:hover {
-    background: var(--surface-hover-strong);
-}
-
-.file-item-menu-item:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
-.file-item-menu-item:disabled:hover {
-    background: transparent;
-}
 
 .file-item:hover {
     background: var(--surface-hover);

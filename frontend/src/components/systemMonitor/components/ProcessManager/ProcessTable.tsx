@@ -83,7 +83,7 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes: initialProcesses
 
 	const getSortIndicator = (column: SortColumn) => {
 		if (sortState.column !== column) return null;
-		return sortState.order === 'asc' ? ' ↑' : ' ↓';
+		return sortState.order === 'asc' ? '↑' : '↓';
 	};
 
 	const renderSortHeader = (column: SortColumn, label: string) => (
@@ -95,8 +95,8 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes: initialProcesses
 				sortState.column === column ? (sortState.order === 'asc' ? 'ascending' : 'descending') : 'none'
 			}
 		>
-			{label}
-			{getSortIndicator(column)}
+			<span className="ProcessTableHeaderLabel">{label}</span>
+			<span className="ProcessTableHeaderArrow">{getSortIndicator(column)}</span>
 		</button>
 	);
 
@@ -156,11 +156,13 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes: initialProcesses
 
 			{contextMenu && (
 				<div
-					className="RowContextMenu"
-					style={{ left: contextMenu.x, top: contextMenu.y }}
+					className="file-item-menu"
+					style={{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}
 					role="menu"
+					onClick={(e) => e.stopPropagation()}
+					onContextMenu={(e) => e.preventDefault()}
 				>
-					<button type="button" className="ContextMenuItem" onClick={handleDelete}>
+					<button type="button" className="file-item-menu-item" onClick={handleDelete}>
 						Delete
 					</button>
 				</div>
