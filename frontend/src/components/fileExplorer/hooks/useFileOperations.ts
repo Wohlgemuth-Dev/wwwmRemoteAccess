@@ -28,7 +28,6 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu, 
         const pathToRefresh = currentPath || lastKnownPathRef.current;
         setLoading(true);
         setError(null);
-        console.log('Refreshing folder contents for path', pathToRefresh);
         try {
             const response = await fileExplorerApi.navigate(pathToRefresh);
             setRawItems(response.items);
@@ -128,11 +127,11 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu, 
         }
 
         fileExplorerApi.create(currentPath, trimmedName, type)
-        .then(() => {
-            handleRefresh();
-        }).catch((err) => {
-            console.error(`Failed to create ${type}`, err);
-        });
+            .then(() => {
+                handleRefresh();
+            }).catch((err) => {
+                console.error(`Failed to create ${type}`, err);
+            });
     }, [currentPath, handleRefresh]);
 
     const handleDelete = useCallback((itemPaths: string[]) => {
@@ -148,7 +147,7 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu, 
         fileExplorerApi.deleteBulk(itemPaths).then(() => {
             console.log('Deleted items', itemPaths);
             handleRefresh();
-        }).catch((err) => {            
+        }).catch((err) => {
             console.error('Failed to delete items', itemPaths, err);
         });
     }, [currentPath, handleRefresh]);
@@ -166,12 +165,12 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu, 
         // TODO: implement paste logic once backend is wired.
         console.log('Pasting items ', itemPathClipboardRef.current, ' into ', currentPath);
         fileExplorerApi.pasteBulk(itemPathClipboardRef.current, currentPath)
-        .then(() => {
-            itemPathClipboardRef.current = [];
-            handleRefresh();
-        }).catch((err) => {
-            console.error('Failed to paste items', err);
-        });
+            .then(() => {
+                itemPathClipboardRef.current = [];
+                handleRefresh();
+            }).catch((err) => {
+                console.error('Failed to paste items', err);
+            });
     }, [currentPath]);
 
     const handleMove = useCallback((sourceItemPaths: string[], targetPath: string) => {
@@ -179,11 +178,11 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu, 
         console.log('Moving items', sourceItemPaths, 'to', targetPath);
 
         fileExplorerApi.moveBulk(sourceItemPaths, targetPath)
-        .then(() => {
-            handleRefresh();
-        }).catch((err) => {
-            console.error('Failed to move items', err, "to target path", targetPath);
-        });
+            .then(() => {
+                handleRefresh();
+            }).catch((err) => {
+                console.error('Failed to move items', err, "to target path", targetPath);
+            });
     }, [currentPath]);
 
     const handleRename = useCallback((itemPath: string, newPath: string) => {
@@ -191,12 +190,12 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu, 
         void itemPath;
         console.log('Renaming item', itemPath, "to", newPath);
         fileExplorerApi.rename(itemPath, newPath)
-        .then(() => {
-            console.log('Renamed item', itemPath);
-            handleRefresh();
-        }).catch((err) => {
-            console.error('Failed to rename item', itemPath, err);
-        });
+            .then(() => {
+                console.log('Renamed item', itemPath);
+                handleRefresh();
+            }).catch((err) => {
+                console.error('Failed to rename item', itemPath, err);
+            });
     }, [currentPath]);
 
     const handleItemMenuAction = useCallback(
