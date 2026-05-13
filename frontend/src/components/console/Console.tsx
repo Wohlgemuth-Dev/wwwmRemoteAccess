@@ -150,7 +150,25 @@ const Console: React.FC = () => {
     };
 
     return (
-        <div className="console-container" onClick={() => inputRef.current?.focus()}>
+        <div 
+            className="console-container" 
+            onClick={() => {
+                // Only focus if the user is not trying to select text
+                if (window.getSelection()?.toString() === '') {
+                    if (inputRef.current) {
+                        inputRef.current.focus();
+                        
+                        // Move cursor to the end
+                        const range = document.createRange();
+                        const sel = window.getSelection();
+                        range.selectNodeContents(inputRef.current);
+                        range.collapse(false); // false means collapse to end
+                        sel?.removeAllRanges();
+                        sel?.addRange(range);
+                    }
+                }
+            }}
+        >
             <div className="console-header">
                 <span>Terminal</span>
             </div>
