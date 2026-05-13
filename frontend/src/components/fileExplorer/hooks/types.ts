@@ -7,6 +7,7 @@ export type FileItem = {
     name: string;
     type: 'file' | 'folder';
     fullPath: string;
+    size: number;
 };
 
 export type ItemMenuAction = 'rename' | 'download' | 'delete' | 'copy';

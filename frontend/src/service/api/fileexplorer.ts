@@ -3,6 +3,7 @@ import { apiClient } from './client';
 export type FileItemResponse = {
     name: string;
     type: 'file' | 'folder';
+    size: number;
 };
 
 export type NavigateResponse = {

@@ -13,7 +13,7 @@ interface UseFileOperationsParams {
 export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu, onDownloadStart }: UseFileOperationsParams) => {
     const itemPathClipboardRef = useRef<string[]>([]);
     const lastKnownPathRef = useRef(currentPath);
-    const [rawItems, setRawItems] = useState<{ name: string; type: 'file' | 'folder' }[]>([]);
+    const [rawItems, setRawItems] = useState<{ name: string; type: 'file' | 'folder'; size: number }[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isDownloading, setIsDownloading] = useState(false);
