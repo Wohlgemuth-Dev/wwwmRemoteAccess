@@ -46,16 +46,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = async () => {
-        setToken(null);
-        setLoginTimestamp(null);
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('loginTimestamp');
         try {
             await authApi.logout();
         } catch (err) {
-            if (err instanceof Error) {
-                setError(err.message);
-            }
+            // Ignore API errors during logout (e.g., token already expired server-side)
+        } finally {
+            setToken(null);
+            setLoginTimestamp(null);
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('loginTimestamp');
+            setError(null);
         }
     };
 
