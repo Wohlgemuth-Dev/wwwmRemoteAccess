@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Navbar from "../navbar/Navbar";
 import Console from "../console/Console";
 import FileExplorer from '../fileExplorer/FileExplorer';
+import SystemMonitor from '../systemMonitor/SystemMonitor';
 
 const Desktop = () => {
     const [activeApp, setActiveApp] = useState<string>('home');
@@ -20,9 +21,8 @@ const Desktop = () => {
                 <div style={{ display: activeApp === 'file-explorer' ? 'block' : 'none', height: '100%' }}>
                     <FileExplorer />
                 </div>
-                <div style={{ display: activeApp === 'system-monitor' ? 'block' : 'none', padding: '20px' }}>
-                    <h1>System Monitor</h1>
-                    <p>System Monitor content to be populated later.</p>
+                <div style={{ display: activeApp === 'system-monitor' ? 'block' : 'none', height: '100%' }}>
+                    <SystemMonitor />
                 </div>
             </div>
         </div>

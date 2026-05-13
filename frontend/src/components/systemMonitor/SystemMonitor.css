@@ -1,0 +1,659 @@
+.SystemMonitor {
+	--text-primary: var(--ra-text-primary);
+	--text-muted: var(--ra-text-muted);
+	--border-soft: var(--ra-border-soft);
+	--border-strong: var(--ra-border-strong);
+	--border-input-focus: var(--ra-border-input-focus);
+	--surface-soft: var(--ra-surface-soft);
+	--surface-hover-mid: var(--ra-surface-hover-mid);
+	--surface-hover: var(--ra-surface-hover);
+	--accent: var(--ra-accent);
+	--accent-soft: var(--ra-accent-soft);
+	--accent-border: var(--ra-accent-border);
+	--accent-border-strong: var(--ra-accent-border-strong);
+	--accent-focus: var(--ra-accent-focus);
+	--status-running: var(--ra-success);
+	--status-running-soft: var(--ra-success-soft);
+	--status-running-border: var(--ra-success-border);
+	--status-sleeping: var(--ra-text-muted);
+	--status-sleeping-soft: var(--ra-surface-hover-mid);
+	--status-sleeping-border: var(--border-soft);
+	--status-stopped: var(--ra-error);
+	--status-stopped-soft: color-mix(in srgb, var(--ra-error) 18%, transparent);
+	--status-stopped-border: color-mix(in srgb, var(--ra-error) 45%, transparent);
+	--status-zombie: var(--ra-error);
+	--status-zombie-soft: color-mix(in srgb, var(--ra-error) 24%, transparent);
+	--status-zombie-border: color-mix(in srgb, var(--ra-error) 52%, transparent);
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	color: var(--text-primary);
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+.SystemMonitorMobileNav {
+	--control-height: 2.1rem;
+	--control-radius: 8px;
+	display: none;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 0.6rem;
+	padding: 0.65rem 0.9rem;
+	background: var(--ra-control-bg);
+	background-color: var(--ra-control-bg);
+	border-bottom: 1px solid var(--border-strong);
+	transition: all 0.3s ease;
+	color: var(--text-primary);
+	box-sizing: border-box;
+}
+
+.SystemMonitorMobileNavButton {
+	appearance: none;
+	border: 1px solid var(--border-soft);
+	background: transparent;
+	color: var(--text-primary);
+	border-radius: var(--control-radius);
+	height: var(--control-height);
+	padding: 0 0.7rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font: inherit;
+	font-size: 0.84rem;
+	line-height: 1.2;
+	cursor: pointer;
+	transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.SystemMonitorMobileNavButton:hover {
+	background: var(--surface-hover-mid);
+	border-color: var(--border-strong);
+}
+
+.SystemMonitorMobileNavButton.is-active {
+	background: var(--accent-soft);
+	border-color: var(--accent-border-strong);
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.SystemMonitorMobileNavButton:focus-visible {
+	outline: 2px solid var(--accent-focus);
+	outline-offset: 1px;
+}
+
+.SystemMonitorPanels {
+	display: grid;
+	grid-template-columns: 55fr 1px 45fr;
+	column-gap: 0.75rem;
+	align-items: stretch;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	flex: 1;
+	background: var(--ra-panel-bg);
+}
+
+.SystemMonitorPanel {
+	min-width: 0;
+	height: 100%;
+	min-height: 0;
+}
+
+.ProcessManager {
+	min-width: 0;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.SystemResources {
+	display: grid;
+	grid-template-columns: 48fr 1px 52fr;
+	column-gap: 0.75rem;
+	height: 100%;
+	min-height: 0;
+	padding: 0.75rem;
+	box-sizing: border-box;
+}
+
+.SystemResourcesList {
+	display: grid;
+	grid-template-columns: repeat(1, minmax(0, 1fr));
+	grid-auto-rows: minmax(88px, auto);
+	gap: 0.6rem;
+	align-content: start;
+	min-height: 0;
+	overflow: auto;
+	padding-right: 0.2rem;
+	padding-top: 0.2rem;
+	scrollbar-width: thin;
+	scrollbar-color: var(--border-strong) var(--surface-soft);
+}
+
+.SystemResourceTile {
+	--tile-pad-y: 0.65rem;
+	--tile-pad-x: 0.75rem;
+	--tile-graph-share: 30%;
+	display: grid;
+	grid-template-columns: minmax(2.2rem, var(--tile-graph-share)) minmax(0, 1fr);
+	align-items: stretch;
+	text-align: left;
+	background: var(--surface-soft);
+	border: 1px solid var(--border-soft);
+	border-radius: 10px;
+	padding: var(--tile-pad-y) var(--tile-pad-x);
+	cursor: pointer;
+	transition: border-color 120ms ease, background-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+	font: inherit;
+	color: var(--text-primary);
+	min-height: 88px;
+	gap: var(--tile-pad-x);
+}
+
+.ResourceTileGraph {
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	overflow: hidden;
+	background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 45%, transparent), color-mix(in srgb, var(--accent) 20%, transparent));
+	border-radius: 7px;
+	padding: 0;
+}
+
+.ResourceTileContent {
+	min-width: 0;
+	align-self: center;
+}
+
+.DeviceMetricChart {
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+}
+
+.DeviceMetricChart.is-compact {
+	pointer-events: none;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.SystemResourceTile:hover .ResourceTileGraph {
+	border-color: var(--border-strong);
+}
+
+.SystemResourceTile.is-selected .ResourceTileGraph {
+	border-color: var(--accent-border);
+}
+
+.ResourceTileContent h2 {
+	margin: 0;
+	font-size: 0.95rem;
+	line-height: 1.2;
+}
+
+.ResourceTileContent p {
+	margin: 0.35rem 0 0;
+	font-size: 0.82rem;
+	color: var(--text-muted);
+	line-height: 1.25;
+}
+
+.SystemResourceTile:hover {
+	background: var(--surface-hover);
+	border-color: var(--border-strong);
+	transform: translateY(-1px);
+}
+
+.SystemResourceTile:focus-visible {
+	outline: 2px solid var(--accent-focus);
+	outline-offset: 2px;
+}
+
+.SystemResourceTile.is-selected {
+	background: var(--accent-soft);
+	border-color: var(--accent-border);
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.SystemResourceDetails {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	height: 100%;
+	padding: 0.3rem 0.2rem 0.3rem 0.5rem;
+	min-width: 0;
+	overflow: auto;
+}
+
+.SystemResourceDetailsHeader {
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+}
+
+.SystemResourceDetailsHeader h1 {
+	margin: 0;
+	font-size: 1.2rem;
+	line-height: 1.2;
+}
+
+.SystemResourceDetailsHeader p {
+	margin: 0;
+	color: var(--text-muted);
+	line-height: 1.45;
+}
+
+.SystemResourceDetailsChart {
+	flex: 1;
+	min-height: 220px;
+	padding: 0.75rem;
+	border: 1px solid var(--border-soft);
+	border-radius: 12px;
+	background: linear-gradient(180deg, var(--ra-highlight-subtle), var(--ra-surface-soft));
+	overflow: hidden;
+}
+
+.SystemResourceDetailsChart .DeviceMetricChart {
+	pointer-events: auto;
+}
+
+.ResourceDetailMetrics {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+	gap: 0.6rem;
+	padding-top: 0.3rem;
+}
+
+.DetailMetricItem {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 0.8rem 0.6rem;
+	background: var(--surface-soft);
+	border: 1px solid var(--border-soft);
+	border-radius: 8px;
+	gap: 0.35rem;
+	transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.DetailMetricItem:hover {
+	background: var(--surface-hover-mid);
+	border-color: var(--border-strong);
+}
+
+.DetailMetricLabel {
+	font-size: 0.75rem;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	line-height: 1;
+}
+
+.DetailMetricValue {
+	font-size: 1.1rem;
+	font-weight: 500;
+	color: var(--text-primary);
+	line-height: 1;
+}
+
+.ProcessManager {
+	padding: 0.95rem;
+	box-sizing: border-box;
+}
+
+.ProcessManager h1 {
+	margin: 0;
+	font-size: 1.2rem;
+	line-height: 1.2;
+}
+
+.ProcessManager p {
+	margin: 0.6rem 0 0;
+	color: var(--text-muted);
+	line-height: 1.45;
+}
+
+.SystemMonitorDivider,
+.SystemResourcesDivider {
+	width: 1px;
+	background: linear-gradient(to bottom, transparent, var(--border-input-focus), transparent);
+}
+
+.SystemResourcesList::-webkit-scrollbar,
+.SystemResourceDetails::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+.SystemResourcesList::-webkit-scrollbar-track,
+.SystemResourceDetails::-webkit-scrollbar-track {
+	background: var(--surface-soft);
+	border-radius: 999px;
+}
+
+.SystemResourcesList::-webkit-scrollbar-thumb,
+.SystemResourceDetails::-webkit-scrollbar-thumb {
+	background: var(--border-soft);
+	border-radius: 999px;
+	border: 2px solid transparent;
+	background-clip: content-box;
+}
+
+.SystemResourcesList::-webkit-scrollbar-thumb:hover,
+.SystemResourceDetails::-webkit-scrollbar-thumb:hover {
+	background: var(--border-strong);
+	background-clip: content-box;
+}
+
+/* Process Manager Styles */
+
+.ProcessManagerHeader {
+	padding: 0.95rem;
+}
+
+.ProcessManagerHeader h1 {
+	margin: 0;
+	font-size: 1.2rem;
+	line-height: 1.2;
+}
+
+.ProcessTable {
+	flex: 1;
+	min-height: 0;
+	height: auto;
+	overflow: auto;
+	background: var(--ra-control-bg);
+	border: 1px solid var(--border-soft);
+	border-radius: 12px;
+	background-clip: padding-box;
+	padding-right: 0.2rem;
+	scrollbar-width: thin;
+	scrollbar-color: var(--border-strong) var(--surface-soft);
+}
+
+.ProcessTable table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	background: var(--ra-control-bg);
+	border-radius: inherit;
+	font-size: 0.9rem;
+}
+
+.ProcessTable thead {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	background: #050505;
+	background-color: #050505;
+	border-bottom: 1px solid var(--border-strong);
+}
+
+.ProcessTable thead tr {
+	border: none;
+}
+
+.ProcessTable th {
+	position: sticky;
+	top: 0;
+	/* padding moved to the button so the full cell can be clicked */
+	padding: 0;
+	text-align: left;
+	font-weight: 500;
+	color: var(--text-primary);
+	border-right: 1px solid var(--border-soft);
+	background: #050505;
+	background-color: #050505;
+	user-select: none;
+}
+
+.ProcessTable th:last-child {
+	border-right: none;
+}
+
+.ProcessTable th:first-child {
+	border-top-left-radius: 12px;
+}
+
+.ProcessTable th:last-child {
+	border-top-right-radius: 12px;
+}
+
+.ProcessTableHeader {
+	appearance: none;
+	background: none;
+	border: none;
+	color: var(--text-primary);
+	cursor: pointer;
+	font: inherit;
+	font-weight: 500;
+	/* make the button fill the header cell so clicking anywhere sorts */
+	padding: 0.65rem 0.75rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	width: 100%;
+	transition: color 120ms ease;
+}
+
+.ProcessTableHeaderLabel {
+	text-align: center;
+}
+
+.ProcessTableHeaderArrow {
+	min-width: 1.2rem;
+	text-align: right;
+	margin-left: auto;
+}
+
+.ProcessTableHeader:hover {
+	color: var(--accent);
+}
+
+.ProcessTableHeader:focus-visible {
+	outline: 3px solid var(--accent-focus);
+	outline-offset: 0px;
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.ProcessTable tbody tr {
+	border-bottom: 1px solid var(--border-soft);
+	transition: background-color 120ms ease;
+}
+
+/* Alternating row backgrounds: default rows use the control surface, even rows get a subtle accent tint */
+.ProcessTable tbody tr {
+	border-bottom: 1px solid var(--border-soft);
+	transition: background-color 120ms ease;
+	background: transparent; /* base transparent to let the table surface show */
+}
+.ProcessTable tbody tr:nth-child(odd) {
+	background: var(--ra-control-bg);
+}
+
+.ProcessTable tbody tr:nth-child(even) {
+	background: color-mix(in srgb, var(--accent) 7%, var(--ra-control-bg));
+}
+
+.ProcessTable tbody tr:nth-child(odd):hover {
+	background: color-mix(in srgb, var(--surface-hover-mid) 40%, var(--ra-control-bg));
+	background-color: color-mix(in srgb, var(--surface-hover-mid) 40%, var(--ra-control-bg));
+}
+
+.ProcessTable tbody tr:nth-child(even):hover {
+	background: color-mix(in srgb, var(--surface-hover-mid) 40%, color-mix(in srgb, var(--accent) 7%, var(--ra-control-bg)));
+	background-color: color-mix(in srgb, var(--surface-hover-mid) 40%, color-mix(in srgb, var(--accent) 7%, var(--ra-control-bg)));
+}
+
+.ProcessTable td {
+	padding: 0.55rem 0.75rem;
+	color: var(--text-primary);
+	border-right: 1px solid var(--border-soft);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	vertical-align: middle;
+}
+
+.ProcessTable td:last-child {
+	border-right: none;
+}
+
+.ProcessNameCell {
+	min-width: 200px;
+	padding: 0;
+}
+
+.ProcessNameContent {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.55rem 0.75rem;
+	overflow: hidden;
+}
+
+.ExpandToggle {
+	appearance: none;
+	background: none;
+	border: none;
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: 0.75rem;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.2rem;
+	height: 1.2rem;
+	transition: color 120ms ease, transform 120ms ease;
+	flex-shrink: 0;
+}
+
+.ExpandToggle:hover {
+	color: var(--text-primary);
+}
+
+.ExpandToggle.is-expanded {
+	transform: rotate(90deg);
+}
+
+.ExpandTogglePlaceholder {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.2rem;
+	height: 1.2rem;
+	flex-shrink: 0;
+}
+
+.ProcessName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ProcessPidCell,
+.ProcessCpuCell,
+.ProcessMemoryCell {
+	text-align: left;
+	min-width: 80px;
+}
+
+.ProcessStatusCell {
+	min-width: 90px;
+}
+
+.StatusBadge {
+	display: inline-block;
+	padding: 0.25rem 0.5rem;
+	border-radius: 4px;
+	font-size: 0.8rem;
+	font-weight: 500;
+	background: var(--surface-soft);
+	border: 1px solid var(--border-soft);
+	color: var(--text-muted);
+}
+
+.StatusBadge.status-running {
+	background: color-mix(in srgb, var(--status-running) 20%, transparent);
+	border-color: color-mix(in srgb, var(--status-running) 50%, transparent);
+	color: var(--status-running);
+}
+
+.StatusBadge.status-sleeping {
+	background: color-mix(in srgb, var(--status-sleeping-soft) 70%, transparent);
+	border-color: var(--status-sleeping-border);
+	color: var(--status-sleeping);
+}
+
+.StatusBadge.status-stopped {
+	background: var(--status-stopped-soft);
+	border-color: var(--status-stopped-border);
+	color: var(--status-stopped);
+}
+
+.StatusBadge.status-zombie {
+	background: var(--status-zombie-soft);
+	border-color: var(--status-zombie-border);
+	color: var(--status-zombie);
+}
+
+.ProcessTable::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+.ProcessTable::-webkit-scrollbar-track {
+	background: var(--surface-soft);
+	border-radius: 999px;
+}
+
+.ProcessTable::-webkit-scrollbar-thumb {
+	background: var(--border-soft);
+	border-radius: 999px;
+	border: 2px solid transparent;
+	background-clip: content-box;
+}
+
+.ProcessTable::-webkit-scrollbar-thumb:hover {
+	background: var(--border-strong);
+	background-clip: content-box;
+}
+
+@media (max-width: 1050px) {
+	.SystemMonitorMobileNav {
+		display: flex;
+	}
+
+	.SystemMonitorPanels {
+		display: block;
+		height: auto;
+		min-height: 0;
+		flex: 1;
+		touch-action: pan-y;
+	}
+
+	.SystemMonitorPanel {
+		display: none;
+	}
+
+	.SystemMonitorPanel.is-active {
+		display: block;
+	}
+
+	.SystemMonitorDivider {
+		display: none;
+	}
+
+	.SystemResources,
+	.ProcessManager {
+		height: 100%;
+	}
+}
