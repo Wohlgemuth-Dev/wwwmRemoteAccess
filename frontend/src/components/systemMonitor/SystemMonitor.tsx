@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './SystemMonitor.css';
 import { SystemMetricsProvider } from './metrics';
 import SystemResources from './components/SystemResources';
@@ -11,7 +11,19 @@ const TOUCH_SWIPE_THRESHOLD = 44;
 
 const SystemMonitor: React.FC = () => {
     const [activePanel, setActivePanel] = useState<MonitorPanel>('resources');
+    const [isMobileViewport, setIsMobileViewport] = useState(false);
     const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+    useEffect(() => {
+        const updateViewport = () => {
+            setIsMobileViewport(window.innerWidth <= RESPONSIVE_BREAKPOINT_DESKTOP);
+        };
+
+        updateViewport();
+        window.addEventListener('resize', updateViewport);
+
+        return () => window.removeEventListener('resize', updateViewport);
+    }, []);
 
     const handleTouchStart: React.TouchEventHandler<HTMLDivElement> = (event) => {
         const touch = event.changedTouches[0];
@@ -64,13 +76,17 @@ const SystemMonitor: React.FC = () => {
             </div>
 
                 <div className="SystemMonitorPanels" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-                    <div className={`SystemMonitorPanel${activePanel === 'resources' ? ' is-active' : ''}`}>
-                        <SystemResources />
-                    </div>
-                    <div aria-hidden="true" className="SystemMonitorDivider" />
-                    <div className={`SystemMonitorPanel${activePanel === 'processes' ? ' is-active' : ''}`}>
-                        <ProcessManager />
-                    </div>
+                    {(!isMobileViewport || activePanel === 'resources') && (
+                        <div className={`SystemMonitorPanel${activePanel === 'resources' ? ' is-active' : ''}`}>
+                            <SystemResources />
+                        </div>
+                    )}
+                    {!isMobileViewport && <div aria-hidden="true" className="SystemMonitorDivider" />}
+                    {(!isMobileViewport || activePanel === 'processes') && (
+                        <div className={`SystemMonitorPanel${activePanel === 'processes' ? ' is-active' : ''}`}>
+                            <ProcessManager />
+                        </div>
+                    )}
                 </div>
             </div>
         </SystemMetricsProvider>

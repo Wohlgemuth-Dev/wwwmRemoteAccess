@@ -12,6 +12,18 @@
 	--accent-border: var(--ra-accent-border);
 	--accent-border-strong: var(--ra-accent-border-strong);
 	--accent-focus: var(--ra-accent-focus);
+	--status-running: var(--ra-success);
+	--status-running-soft: var(--ra-success-soft);
+	--status-running-border: var(--ra-success-border);
+	--status-sleeping: var(--ra-text-muted);
+	--status-sleeping-soft: var(--ra-surface-hover-mid);
+	--status-sleeping-border: var(--border-soft);
+	--status-stopped: var(--ra-error);
+	--status-stopped-soft: color-mix(in srgb, var(--ra-error) 18%, transparent);
+	--status-stopped-border: color-mix(in srgb, var(--ra-error) 45%, transparent);
+	--status-zombie: var(--ra-error);
+	--status-zombie-soft: color-mix(in srgb, var(--ra-error) 24%, transparent);
+	--status-zombie-border: color-mix(in srgb, var(--ra-error) 52%, transparent);
 	display: flex;
 	flex-direction: column;
 	width: 100%;
@@ -144,7 +156,6 @@
 	min-height: 0;
 	overflow: hidden;
 	background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 45%, transparent), color-mix(in srgb, var(--accent) 20%, transparent));
-	/*border: 1px solid var(--border-soft);*/
 	border-radius: 7px;
 	padding: 0;
 }
@@ -239,7 +250,7 @@
 	padding: 0.75rem;
 	border: 1px solid var(--border-soft);
 	border-radius: 12px;
-	background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
+	background: linear-gradient(180deg, var(--ra-highlight-subtle), var(--ra-surface-soft));
 	overflow: hidden;
 }
 
@@ -332,6 +343,284 @@
 
 .SystemResourcesList::-webkit-scrollbar-thumb:hover,
 .SystemResourceDetails::-webkit-scrollbar-thumb:hover {
+	background: var(--border-strong);
+	background-clip: content-box;
+}
+
+/* Process Manager Styles */
+
+.ProcessManagerHeader {
+	padding: 0.95rem;
+	border-bottom: 1px solid var(--border-soft);
+}
+
+.ProcessManagerHeader h1 {
+	margin: 0;
+	font-size: 1.2rem;
+	line-height: 1.2;
+}
+
+.ProcessTable {
+	height: 100%;
+	overflow: auto;
+	background: var(--ra-control-bg);
+	padding-right: 0.2rem;
+	scrollbar-width: thin;
+	scrollbar-color: var(--border-strong) var(--surface-soft);
+}
+
+.ProcessTable table {
+	width: 100%;
+	border-collapse: collapse;
+	background: var(--ra-control-bg);
+	font-size: 0.9rem;
+}
+
+.ProcessTable thead {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	background: var(--ra-control-bg);
+	background-color: var(--ra-control-bg);
+	border-bottom: 1px solid var(--border-strong);
+	box-shadow: 0 8px 18px var(--ra-shadow-overlay);
+}
+
+.ProcessTable thead tr {
+	border: none;
+}
+
+.ProcessTable th {
+	position: sticky;
+	top: 0;
+	/* padding moved to the button so the full cell can be clicked */
+	padding: 0;
+	text-align: left;
+	font-weight: 500;
+	color: var(--text-primary);
+	border-right: 1px solid var(--border-soft);
+	background: var(--ra-control-bg);
+	background-color: var(--ra-control-bg);
+	user-select: none;
+}
+
+.ProcessTable th:last-child {
+	border-right: none;
+}
+
+.ProcessTableHeader {
+	appearance: none;
+	background: none;
+	border: none;
+	color: var(--text-primary);
+	cursor: pointer;
+	font: inherit;
+	font-weight: 500;
+	/* make the button fill the header cell so clicking anywhere sorts */
+	padding: 0.65rem 0.75rem;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	width: 100%;
+	justify-content: space-around; /* use space-around per request */
+	transition: color 120ms ease;
+}
+
+.ProcessTableHeader:hover {
+	color: var(--accent);
+}
+
+.ProcessTableHeader:focus-visible {
+	outline: 3px solid var(--accent-focus);
+	outline-offset: 0px;
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.ProcessTable tbody tr {
+	border-bottom: 1px solid var(--border-soft);
+	transition: background-color 120ms ease;
+}
+
+/* Alternating row backgrounds: default rows use the control surface, even rows get a subtle accent tint */
+.ProcessTable tbody tr {
+	border-bottom: 1px solid var(--border-soft);
+	transition: background-color 120ms ease;
+	background: transparent; /* base transparent to let the table surface show */
+}
+.ProcessTable tbody tr:nth-child(odd) {
+	background: var(--ra-control-bg);
+}
+
+.ProcessTable tbody tr:nth-child(even) {
+	background: color-mix(in srgb, var(--accent) 7%, var(--ra-control-bg));
+}
+
+.ProcessTable tbody tr:nth-child(odd):hover {
+	background: color-mix(in srgb, var(--surface-hover-mid) 40%, var(--ra-control-bg));
+	background-color: color-mix(in srgb, var(--surface-hover-mid) 40%, var(--ra-control-bg));
+}
+
+.ProcessTable tbody tr:nth-child(even):hover {
+	background: color-mix(in srgb, var(--surface-hover-mid) 40%, color-mix(in srgb, var(--accent) 7%, var(--ra-control-bg)));
+	background-color: color-mix(in srgb, var(--surface-hover-mid) 40%, color-mix(in srgb, var(--accent) 7%, var(--ra-control-bg)));
+}
+
+.ProcessTable td {
+	padding: 0.55rem 0.75rem;
+	color: var(--text-primary);
+	border-right: 1px solid var(--border-soft);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	vertical-align: middle;
+}
+
+.ProcessTable td:last-child {
+	border-right: none;
+}
+
+.ProcessNameCell {
+	min-width: 200px;
+	padding: 0;
+}
+
+.ProcessNameContent {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.55rem 0.75rem;
+	overflow: hidden;
+}
+
+.ExpandToggle {
+	appearance: none;
+	background: none;
+	border: none;
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: 0.75rem;
+	padding: 0.2rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.2rem;
+	transition: color 120ms ease, transform 120ms ease;
+	flex-shrink: 0;
+}
+
+.ExpandToggle:hover {
+	color: var(--text-primary);
+}
+
+.ExpandToggle.is-expanded {
+	transform: rotate(90deg);
+}
+
+.ExpandTogglePlaceholder {
+	display: inline-block;
+	width: 1.2rem;
+	flex-shrink: 0;
+}
+
+.ProcessName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ProcessPidCell,
+.ProcessCpuCell,
+.ProcessMemoryCell {
+	text-align: right;
+	min-width: 80px;
+}
+
+.ProcessStatusCell {
+	min-width: 90px;
+}
+
+.StatusBadge {
+	display: inline-block;
+	padding: 0.25rem 0.5rem;
+	border-radius: 4px;
+	font-size: 0.8rem;
+	font-weight: 500;
+	background: var(--surface-soft);
+	border: 1px solid var(--border-soft);
+	color: var(--text-muted);
+}
+
+.StatusBadge.status-running {
+	background: color-mix(in srgb, var(--status-running) 20%, transparent);
+	border-color: color-mix(in srgb, var(--status-running) 50%, transparent);
+	color: var(--status-running);
+}
+
+.StatusBadge.status-sleeping {
+	background: color-mix(in srgb, var(--status-sleeping-soft) 70%, transparent);
+	border-color: var(--status-sleeping-border);
+	color: var(--status-sleeping);
+}
+
+.StatusBadge.status-stopped {
+	background: var(--status-stopped-soft);
+	border-color: var(--status-stopped-border);
+	color: var(--status-stopped);
+}
+
+.StatusBadge.status-zombie {
+	background: var(--status-zombie-soft);
+	border-color: var(--status-zombie-border);
+	color: var(--status-zombie);
+}
+
+/* Context menu for process rows */
+.RowContextMenu {
+	position: fixed;
+	background: var(--surface);
+	border: 1px solid var(--border-soft);
+	padding: 0.25rem 0.25rem;
+	border-radius: 6px;
+	z-index: 60;
+	box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+	min-width: 120px;
+}
+
+.ContextMenuItem {
+	appearance: none;
+	background: none;
+	border: none;
+	width: 100%;
+	text-align: left;
+	padding: 0.5rem 0.6rem;
+	cursor: pointer;
+	font: inherit;
+	color: var(--text-primary);
+	border-radius: 4px;
+}
+
+.ContextMenuItem:hover {
+	background: color-mix(in srgb, var(--surface-hover-mid) 40%, var(--surface));
+}
+
+.ProcessTable::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+.ProcessTable::-webkit-scrollbar-track {
+	background: var(--surface-soft);
+	border-radius: 999px;
+}
+
+.ProcessTable::-webkit-scrollbar-thumb {
+	background: var(--border-soft);
+	border-radius: 999px;
+	border: 2px solid transparent;
+	background-clip: content-box;
+}
+
+.ProcessTable::-webkit-scrollbar-thumb:hover {
 	background: var(--border-strong);
 	background-clip: content-box;
 }

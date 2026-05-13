@@ -27,7 +27,7 @@
     --ra-accent-border-strong: rgba(123, 167, 214, 0.55);
     --ra-accent-focus: rgba(123, 167, 214, 0.6);
     --ra-panel-bg: linear-gradient(180deg, rgba(12, 12, 16, 0.82), rgba(10, 10, 14, 0.92));
-    --ra-control-bg: rgba(20, 20, 25, 0.9);
+    --ra-control-bg: rgba(42, 42, 47);
     --ra-external-drop-bg: linear-gradient(180deg, rgba(20, 33, 46, 0.9), rgba(10, 10, 14, 0.94));
     --ra-error: #a43434;
     --ra-error-bg: linear-gradient(180deg, rgba(10, 10, 14, 0.92), rgba(12, 12, 16, 0.82));
@@ -36,4 +36,8 @@
     --ra-control-divider: rgba(255, 255, 255, 0.52);
     --ra-shadow-overlay: rgba(0, 0, 0, 0.35);
     --ra-checkmark-fill: #0f1722;
+    /* Success / positive color tokens */
+    --ra-success: #34d399;
+    --ra-success-soft: rgba(52, 211, 153, 0.18);
+    --ra-success-border: rgba(52, 211, 153, 0.45);
 }

@@ -99,7 +99,7 @@ const DeviceMetricChart = ({
 
 	return (
 		<div className={`DeviceMetricChart${compact ? ' is-compact' : ''}`}>
-			<ResponsiveContainer width="100%" height="100%">
+			<ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={compact ? 72 : 240}>
 				<AreaChart data={data ?? internalData} margin={{ top: compact ? 0 : 8, right: compact ? 0 : 8, bottom: compact ? 0 : 12, left: compact ? 0 : 8 }}>
 					<defs>
 						<linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
