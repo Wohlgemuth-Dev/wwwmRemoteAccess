@@ -52,14 +52,17 @@
 }
 
 .console-input-area {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    display: block;
+    cursor: text;
+    line-height: 1.4;
 }
 
 .console-prompt {
     color: white;
     font-weight: bold;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-right: 5px;
 }
 
 .console-input {
@@ -68,8 +71,10 @@
     color: white;
     font-family: inherit;
     font-size: 1rem;
-    width: 100%;
     outline: none;
+    display: inline;
+    word-break: break-all;
+    min-width: 2px;
 }
 
 
