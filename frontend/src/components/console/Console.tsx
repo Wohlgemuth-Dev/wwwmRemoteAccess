@@ -8,11 +8,12 @@ interface ConsoleLine {
     text: string;
     type: 'input' | 'output' | 'error';
 }
+const generateId = () => Math.random().toString(36).substring(2) + Date.now().toString(36);
 
 const Console: React.FC = () => {
     const { token } = useAuth();
     const [lines, setLines] = useState<ConsoleLine[]>([
-        { id: crypto.randomUUID(), text: 'Connecting to server...', type: 'output' },
+        { id: generateId(), text: 'Connecting to server...', type: 'output' },
     ]);
     const [inputValue, setInputValue] = useState('');
     const [currentPath, setCurrentPath] = useState('~');
@@ -61,7 +62,7 @@ const Console: React.FC = () => {
         wsRef.current = ws;
 
         ws.onopen = () => {
-            setLines(prev => [...prev, { id: crypto.randomUUID(), text: 'Connected to bash socket.', type: 'output' }]);
+            setLines(prev => [...prev, { id: generateId(), text: 'Connected to bash socket.', type: 'output' }]);
             ws.send('echo "###CWD###$(pwd)"\n');
         };
 
@@ -70,19 +71,19 @@ const Console: React.FC = () => {
             if (typeof data === 'string' && data.startsWith('###CWD###')) {
                 setCurrentPath(data.replace('###CWD###', '').trim());
             } else {
-                setLines(prev => [...prev, { id: crypto.randomUUID(), text: data, type: 'output' }]);
+                setLines(prev => [...prev, { id: generateId(), text: data, type: 'output' }]);
             }
         };
 
         ws.onerror = (error) => {
             if (isCleaningUp) return;
             console.error("WebSocket error:", error);
-            setLines(prev => [...prev, { id: crypto.randomUUID(), text: 'Error connecting to socket.', type: 'error' }]);
+            setLines(prev => [...prev, { id: generateId(), text: 'Error connecting to socket.', type: 'error' }]);
         };
 
         ws.onclose = () => {
             if (isCleaningUp) return;
-            setLines(prev => [...prev, { id: crypto.randomUUID(), text: 'Connection closed.', type: 'error' }]);
+            setLines(prev => [...prev, { id: generateId(), text: 'Connection closed.', type: 'error' }]);
         };
 
         return () => {
@@ -136,7 +137,7 @@ const Console: React.FC = () => {
         });
         setHistoryIndex(-1);
 
-        setLines((prev) => [...prev, { id: crypto.randomUUID(), text: `${currentPath}>${command}`, type: 'input' }]);
+        setLines((prev) => [...prev, { id: generateId(), text: `${currentPath}>${command}`, type: 'input' }]);
 
         // Handle local commands first
         if (command.toLowerCase() === 'clear') {
@@ -149,7 +150,7 @@ const Console: React.FC = () => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current.send(command + '\necho "###CWD###$(pwd)"\n');
         } else {
-            setLines((prev) => [...prev, { id: crypto.randomUUID(), text: 'Error: WebSocket not connected', type: 'error' }]);
+            setLines((prev) => [...prev, { id: generateId(), text: 'Error: WebSocket not connected', type: 'error' }]);
         }
 
         setInputValue('');
