@@ -1,21 +1,15 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { ChartPoint, MetricKey, ResourceKey, SystemMetricsSnapshot } from './SystemMetricsTypes';
+import type { ChartPoint, MetricKey, SystemMetricsSnapshot } from './SystemMetricsTypes';
 import { BackendSystemMetricsUpdater } from './BackendSystemMetricsUpdater';
-import { SimulatedSystemMetricsUpdater, type SystemMetricsUpdater } from './SystemMetricsUpdater';
+import type { SystemMetricsUpdater } from './SystemMetricsUpdater';
 
 interface SystemMetricsContextValue {
     snapshot: SystemMetricsSnapshot;
-    getSeries: (resourceKey: ResourceKey, metricKey?: MetricKey) => ChartPoint[];
-    getCurrent: (resourceKey: ResourceKey, metricKey?: MetricKey) => number;
+    getSeries: (resourceId: string, metricKey?: MetricKey) => ChartPoint[];
+    getCurrent: (resourceId: string, metricKey?: MetricKey) => number;
 }
 
-const emptySnapshot: SystemMetricsSnapshot = {
-    cpu: {},
-    memory: {},
-    disk: {},
-    network: {},
-    gpu: {},
-};
+const emptySnapshot: SystemMetricsSnapshot = {};
 
 const SystemMetricsContext = createContext<SystemMetricsContextValue | null>(null);
 
@@ -33,19 +27,26 @@ export const SystemMetricsProvider: React.FC<SystemMetricsProviderProps> = ({ ch
         return source.start(setSnapshot);
     }, [source]);
 
+    const dedupeSeries = useCallback((series: ChartPoint[] = []) => {
+        const map = new Map<number, ChartPoint>();
+        series.forEach((pt) => map.set(pt.index, pt));
+        return Array.from(map.values()).sort((a, b) => a.index - b.index);
+    }, []);
+
     const getSeries = useCallback(
-        (resourceKey: ResourceKey, metricKey: MetricKey = 'usage') => {
-            return snapshot[resourceKey][metricKey] ?? [];
+        (resourceId: string, metricKey: MetricKey = 'usage') => {
+            const raw = snapshot[resourceId]?.[metricKey] ?? [];
+            return dedupeSeries(raw);
         },
-        [snapshot],
+        [snapshot, dedupeSeries],
     );
 
     const getCurrent = useCallback(
-        (resourceKey: ResourceKey, metricKey: MetricKey = 'usage') => {
-            const series = snapshot[resourceKey][metricKey] ?? [];
+        (resourceId: string, metricKey: MetricKey = 'usage') => {
+            const series = dedupeSeries(snapshot[resourceId]?.[metricKey] ?? []);
             return series[series.length - 1]?.value ?? 0;
         },
-        [snapshot],
+        [snapshot, dedupeSeries],
     );
 
     return (
@@ -57,7 +58,18 @@ export const SystemMetricsProvider: React.FC<SystemMetricsProviderProps> = ({ ch
 
 export const useSystemMetrics = () => {
     const ctx = useContext(SystemMetricsContext);
-    if (!ctx) throw new Error('useSystemMetrics must be used inside SystemMetricsProvider');
+    if (!ctx) {
+        // Fallback: avoid hard crash when a component accidentally consumes the hook
+        // outside the provider (helps robustness during rendering transitions).
+        // Return a minimal, safe stub matching the context shape.
+        // eslint-disable-next-line no-console
+        console.warn('useSystemMetrics called outside SystemMetricsProvider — returning stub');
+        return {
+            snapshot: emptySnapshot,
+            getSeries: () => [],
+            getCurrent: () => 0,
+        } as SystemMetricsContextValue;
+    }
     return ctx;
 };
 

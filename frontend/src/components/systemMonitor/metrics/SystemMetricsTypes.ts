@@ -9,13 +9,20 @@ export type MetricKey =
 	| 'total'
 	| 'used'
 	| 'swap'
-	| 'temperature';
+	| 'temperature'
+	| 'memoryUsed'
+	| 'memoryFree'
+	| 'memoryTotal'
+	| 'readSpeed'
+	| 'writeSpeed';
+
 
 export interface ChartPoint {
-    index: number;
-    value: number;
+	index: number;
+	value: number;
+	[key: string]: number;
 }
 
 export type MetricSeriesMap = Partial<Record<MetricKey, ChartPoint[]>>;
 
-export type SystemMetricsSnapshot = Record<ResourceKey, MetricSeriesMap>;
+export type SystemMetricsSnapshot = Record<string, MetricSeriesMap>;

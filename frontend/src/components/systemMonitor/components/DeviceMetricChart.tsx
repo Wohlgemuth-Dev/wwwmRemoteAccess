@@ -33,17 +33,30 @@ interface DeviceMetricChartProps {
 	max?: number;
 	initialValue?: number;
 	unit?: string;
+	primarySeriesLabel?: string;
 	data?: ChartPoint[];
+	series?: Array<{
+		dataKey: string;
+		label: string;
+		color: string;
+		unit?: string;
+		strokeWidth?: number;
+	}>;
 }
 
 interface ChartPoint {
 	index: number;
 	value: number;
+	[key: string]: number;
 }
 
 const DEFAULT_POINT_COUNT = 24;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+const hasUsableColor = (value: unknown) => {
+	return typeof value === 'string' && value.length > 0 && !value.startsWith('url(') && value !== 'none';
+};
 
 const buildInitialData = (pointCount: number, initialValue: number, min: number, max: number): ChartPoint[] => {
 	return Array.from({ length: pointCount }, (_, index) => ({
@@ -61,7 +74,9 @@ const DeviceMetricChart = ({
 	max = 100,
 	initialValue = 50,
 	unit = '%',
+	primarySeriesLabel,
 	data,
+	series = [],
 }: DeviceMetricChartProps) => {
 	const [internalData, setInternalData] = useState<ChartPoint[]>(() => buildInitialData(pointCount, initialValue, min, max));
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -77,6 +92,64 @@ const DeviceMetricChart = ({
 		}),
 		[],
 	);
+
+	const renderTooltip = (tooltipProps: any) => {
+		const { active, label, payload } = tooltipProps ?? {};
+
+		if (!active || !Array.isArray(payload) || payload.length === 0) {
+			return null;
+		}
+
+		const uniqueItems = new Map<string, any>();
+
+		payload.forEach((item: any) => {
+			const key = String(item?.dataKey ?? item?.name ?? 'value');
+			const existing = uniqueItems.get(key);
+			const existingHasColor = hasUsableColor(existing?.color ?? existing?.stroke ?? existing?.fill);
+			const incomingHasColor = hasUsableColor(item?.color ?? item?.stroke ?? item?.fill);
+
+			if (!existing || (!existingHasColor && incomingHasColor)) {
+				uniqueItems.set(key, item);
+			}
+		});
+
+		return (
+			<div
+				style={{
+					background: 'var(--ra-surface-overlay)',
+					border: '1px solid var(--border-soft)',
+					borderRadius: '10px',
+					color: 'var(--text-primary)',
+					boxShadow: '0 12px 32px var(--ra-shadow-overlay)',
+					padding: '10px 12px',
+				}}
+			>
+				<div style={{ color: 'var(--text-muted)', marginBottom: 8, fontSize: 12 }}>{label}</div>
+				{Array.from(uniqueItems.values()).map((item: any) => {
+					const dataKey = String(item?.dataKey ?? item?.name ?? 'value');
+					const seriesDefinition = series.find((definition) => definition.dataKey === dataKey);
+					const value = Number(item?.value ?? 0);
+					const entryLabel = dataKey === 'value'
+						? (primarySeriesLabel ?? axes.yLabel)
+						: seriesDefinition?.label ?? String(item?.name ?? dataKey);
+					const entryUnit = dataKey === 'value'
+						? unit
+						: seriesDefinition?.unit ?? '';
+					const entryColor = dataKey === 'value'
+						? color
+						: item?.color ?? item?.stroke ?? item?.fill ?? seriesDefinition?.color ?? color;
+
+					return (
+						<div key={dataKey} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+							<span style={{ width: 8, height: 8, borderRadius: 999, background: entryColor, flex: '0 0 auto' }} />
+							<span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{entryLabel}</span>
+							<span style={{ fontSize: 12, marginLeft: 'auto' }}>{`${value.toFixed(0)}${entryUnit}`}</span>
+						</div>
+					);
+				})}
+			</div>
+		);
+	};
 
 	useEffect(() => {
 		setInternalData(buildInitialData(pointCount, initialValue, min, max));
@@ -164,15 +237,8 @@ const DeviceMetricChart = ({
 					/>
 					<Tooltip
 						cursor={{ stroke: color, strokeDasharray: '4 4' }}
-						contentStyle={{
-							background: 'var(--ra-surface-overlay)',
-							border: '1px solid var(--border-soft)',
-							borderRadius: '10px',
-							color: 'var(--text-primary)',
-							boxShadow: '0 12px 32px var(--ra-shadow-overlay)',
-						}}
-						labelStyle={{ color: 'var(--text-muted)' }}
-						formatter={(value: any) => [`${Number(value ?? 0).toFixed(0)}${unit}`, axes.yLabel]}
+						content={renderTooltip}
+						isAnimationActive={false}
 					/>
 					<Area
 						type="monotone"
@@ -190,6 +256,19 @@ const DeviceMetricChart = ({
 						activeDot={{ r: compact ? 2.5 : 4, stroke: color, strokeWidth: 2, fill: 'var(--ra-panel-bg)' }}
 						isAnimationActive={false}
 					/>
+					{series.map((line) => (
+						<Line
+							key={line.dataKey}
+							type="monotone"
+							dataKey={line.dataKey}
+							name={line.label}
+							stroke={line.color}
+							strokeWidth={line.strokeWidth ?? (compact ? 1.8 : 2.2)}
+							dot={false}
+							activeDot={{ r: compact ? 2.5 : 4, stroke: line.color, strokeWidth: 2, fill: 'var(--ra-panel-bg)' }}
+							isAnimationActive={false}
+						/>
+					))}
 				</AreaChart>
 			)}
 		</div>

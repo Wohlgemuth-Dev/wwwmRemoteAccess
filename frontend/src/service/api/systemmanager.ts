@@ -8,6 +8,7 @@ export interface CpuInfoStat {
 
 export interface CpuResponse {
 	percentage: number;
+	percentages?: number[];
 	info: CpuInfoStat[];
 }
 
@@ -29,9 +30,16 @@ export interface DiskUsageStat {
 	usedPercent?: number;
 }
 
+export interface DiskDeviceStat {
+	name: string;
+	total: number;
+	usedPercent: number;
+	readBytes: number;
+	writeBytes: number;
+}
+
 export interface DiskResponse {
-	partitions: unknown[];
-	usages: DiskUsageStat[];
+	devices: DiskDeviceStat[];
 }
 
 export interface NetworkCounterStat {
