@@ -7,6 +7,7 @@ import (
 
 type ProcessInfo struct {
 	Pid           int32   `json:"pid"`
+	Ppid          int32   `json:"ppid"`
 	Name          string  `json:"name"`
 	Username      string  `json:"username"`
 	MemoryPercent float32 `json:"memoryPercent"`
@@ -27,6 +28,7 @@ func ProcessesHandler(c *fiber.Ctx) error {
 		username, _ := p.Username()
 		mem, _ := p.MemoryPercent()
 		cpu, _ := p.CPUPercent()
+		ppid, _ := p.Ppid()
 		
 		var statusStr string
 		status, err := p.Status()
@@ -38,6 +40,7 @@ func ProcessesHandler(c *fiber.Ctx) error {
 
 		processList = append(processList, ProcessInfo{
 			Pid:           p.Pid,
+			Ppid:          ppid,
 			Name:          name,
 			Username:      username,
 			MemoryPercent: mem,

@@ -32,6 +32,23 @@ export const buildProcessTree = (processes: ProcessData[]): ProcessTreeNode[] =>
 		}
 	});
 
+	// Aggregate CPU and Memory from children to parents
+	const aggregateNode = (node: ProcessTreeNode) => {
+		let totalCpu = node.cpu;
+		let totalMem = node.memory;
+		
+		node.children.forEach(child => {
+			aggregateNode(child);
+			totalCpu += child.cpu;
+			totalMem += child.memory;
+		});
+		
+		node.cpu = totalCpu;
+		node.memory = totalMem;
+	};
+
+	roots.forEach(aggregateNode);
+
 	// Sort children of each node
 	const sortChildren = (node: ProcessTreeNode) => {
 		node.children.sort((a, b) => a.name.localeCompare(b.name));

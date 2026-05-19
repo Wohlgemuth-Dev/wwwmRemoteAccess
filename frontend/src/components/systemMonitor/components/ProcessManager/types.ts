@@ -4,7 +4,7 @@ export interface ProcessData {
 	ppid: number; // Parent Process ID
 	cpu: number; // CPU usage percentage
 	memory: number; // Memory usage in MB
-	status: 'running' | 'sleeping' | 'stopped' | 'zombie';
+	status: string;
 	user?: string;
 }
 

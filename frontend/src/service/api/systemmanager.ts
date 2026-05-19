@@ -58,10 +58,21 @@ export interface GPUResponse {
 	error?: string;
 }
 
+export interface ProcessInfo {
+	pid: number;
+	ppid: number;
+	name: string;
+	username: string;
+	memoryPercent: number;
+	cpuPercent: number;
+	status: string;
+}
+
 export const systemManagerApi = {
 	getCpu: () => apiClient.get<CpuResponse>('/api/systemmanager/cpu'),
 	getMemory: () => apiClient.get<MemoryResponse>('/api/systemmanager/memory'),
 	getDisk: () => apiClient.get<DiskResponse>('/api/systemmanager/disk'),
 	getNetwork: () => apiClient.get<NetworkResponse>('/api/systemmanager/network'),
 	getGpu: () => apiClient.get<GPUResponse>('/api/systemmanager/gpu'),
+	getProcesses: () => apiClient.get<ProcessInfo[]>('/api/systemmanager/processes'),
 };
