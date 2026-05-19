@@ -36,5 +36,18 @@ export const useScrollHint = (breadcrumbsRef: React.RefObject<HTMLDivElement | n
         };
     }, [breadcrumbsRef, currentPath, isEditingPath]);
 
+    useEffect(() => {
+        if (!breadcrumbsRef.current || isEditingPath) return;
+
+        // Auto-scroll to the right when path changes so the latest folder is always visible.
+        const timeoutId = setTimeout(() => {
+            if (breadcrumbsRef.current) {
+                breadcrumbsRef.current.scrollLeft = breadcrumbsRef.current.scrollWidth;
+            }
+        }, 10);
+
+        return () => clearTimeout(timeoutId);
+    }, [breadcrumbsRef, currentPath, isEditingPath]);
+
     return { showScrollHintLeft, showScrollHintRight };
 };

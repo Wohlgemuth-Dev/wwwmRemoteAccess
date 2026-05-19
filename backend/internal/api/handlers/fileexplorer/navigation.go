@@ -1,6 +1,7 @@
 package fileexplorer
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -16,6 +17,7 @@ type NavigateRequest struct {
 type FileItem struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
+	Size int64  `json:"size"`
 }
 
 type NavigateResponse struct {
@@ -43,10 +45,11 @@ func NavigateHandler(c *fiber.Ctx) error {
 	// Clean path
 	targetPath = filepath.Clean(targetPath)
 
-	// Use ls -1F to list directory contents as the authenticated user
-	// -1: one entry per line
+	// Use ls -lF to list directory contents as the authenticated user
+	// -l: long listing format to get file sizes
 	// -F: append indicator (/ for directories)
-	cmd, err := handlers.SetupCmd(c, "ls", "-1F", targetPath)
+	// --time-style=long-iso: ensures consistent date formatting for easier parsing
+	cmd, err := handlers.SetupCmd(c, "ls", "-lF", "--time-style=long-iso", targetPath)
 	if err != nil {
 		log.Printf("SetupCmd error: %v", err)
 		return err
@@ -64,12 +67,20 @@ func NavigateHandler(c *fiber.Ctx) error {
 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		if line == "" {
+		if line == "" || strings.HasPrefix(line, "total ") {
 			continue
 		}
 
-		// Ignore . and ..
-		name := line
+		fields := strings.Fields(line)
+		if len(fields) < 8 {
+			continue
+		}
+
+		sizeStr := fields[4]
+		var size int64
+		fmt.Sscanf(sizeStr, "%d", &size)
+
+		name := strings.Join(fields[7:], " ")
 		itemType := "file"
 
 		// ls -F appends / for directories, * for executables, @ for symlinks, etc.
@@ -89,6 +100,7 @@ func NavigateHandler(c *fiber.Ctx) error {
 		items = append(items, FileItem{
 			Name: name,
 			Type: itemType,
+			Size: size,
 		})
 	}
 
