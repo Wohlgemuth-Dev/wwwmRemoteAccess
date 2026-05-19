@@ -48,6 +48,7 @@ func SetupRoutes(app *fiber.App) {
 	api.Get("/systemmanager/memory", systemmanager.MemoryHandler)
 	api.Get("/systemmanager/network", systemmanager.NetworkHandler)
 	api.Get("/systemmanager/gpu", systemmanager.GPUHandler)
+	api.Get("/systemmanager/processes", systemmanager.ProcessesHandler)
 
 	// Console WebSocket endpoint
 	api.Use("/console", func(c *fiber.Ctx) error {
