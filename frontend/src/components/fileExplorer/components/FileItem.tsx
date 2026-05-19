@@ -1,5 +1,6 @@
 import React from 'react';
 import type { FileItem as FileItemType } from '../hooks';
+import { formatFileSize } from '../utils';
 
 interface FileItemProps {
     item: FileItemType;
@@ -54,6 +55,11 @@ export const FileItem: React.FC<FileItemProps> = ({
             />
             <span className="file-icon">{item.type === 'folder' ? '📁' : '📄'}</span>
             <span className="file-name" title={item.name}>{item.name}</span>
+            {item.type === 'file' && (
+                <span className="file-item-size">
+                    {formatFileSize(item.size)}
+                </span>
+            )}
         </div>
     );
 };
