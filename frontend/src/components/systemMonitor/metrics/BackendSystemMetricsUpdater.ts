@@ -6,11 +6,7 @@ const DEFAULT_POINT_COUNT = 24;
 const DEFAULT_POLL_INTERVAL_MS = 5000;
 
 const emptySnapshot = (): SystemMetricsSnapshot => ({
-	cpu: {},
 	memory: {},
-	disk: {},
-	network: {},
-	gpu: {},
 });
 
 const buildSeries = (value: number, pointCount: number): ChartPoint[] => {
@@ -34,73 +30,9 @@ const average = (values: number[]) => {
 	return values.reduce((sum, value) => sum + value, 0) / values.length;
 };
 
-const weightedAverage = (values: Array<{ total?: number; usedPercent?: number }>) => {
-	let totalWeight = 0;
-	let weightedSum = 0;
-
-	values.forEach((value) => {
-		const weight = value.total ?? 0;
-		const usedPercent = value.usedPercent ?? 0;
-		totalWeight += weight;
-		weightedSum += usedPercent * weight;
-	});
-
-	return totalWeight > 0 ? weightedSum / totalWeight : average(values.map((value) => value.usedPercent ?? 0));
-};
-
-const sumNetworkBytes = (counters: Array<{ bytesRecv?: number; bytesSent?: number }>) => {
-	return counters.reduce((sum, counter) => sum + (counter.bytesRecv ?? 0) + (counter.bytesSent ?? 0), 0);
-};
+// NOTE: weightedAverage and sumNetworkBytes were removed — they were unused helper functions.
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
-
-interface ResourceSample {
-	cpuUsage: number;
-	cpuSpeed: number;
-	cpuThreads: number;
-	cpuCores: number;
-	memoryUsage: number;
-	memoryAvailable: number;
-	memoryTotal: number;
-	memoryUsed: number;
-	diskUsage: number;
-	diskTotal: number;
-	diskPartitions: number;
-	networkUsage: number;
-	networkInterfaces: number;
-	gpuUsage: number;
-	gpuTemperature: number;
-	gpuCount: number;
-}
-
-const applySample = (snapshot: SystemMetricsSnapshot, sample: ResourceSample, pointCount: number): SystemMetricsSnapshot => ({
-	cpu: {
-		usage: updateSeries(snapshot.cpu.usage, sample.cpuUsage, pointCount),
-		speed: updateSeries(snapshot.cpu.speed, sample.cpuSpeed, pointCount),
-		threads: updateSeries(snapshot.cpu.threads, sample.cpuThreads, pointCount),
-		cores: updateSeries(snapshot.cpu.cores, sample.cpuCores, pointCount),
-	},
-	memory: {
-		usage: updateSeries(snapshot.memory.usage, sample.memoryUsage, pointCount),
-		available: updateSeries(snapshot.memory.available, sample.memoryAvailable, pointCount),
-		total: updateSeries(snapshot.memory.total, sample.memoryTotal, pointCount),
-		used: updateSeries(snapshot.memory.used, sample.memoryUsed, pointCount),
-	},
-	disk: {
-		usage: updateSeries(snapshot.disk.usage, sample.diskUsage, pointCount),
-		total: updateSeries(snapshot.disk.total, sample.diskTotal, pointCount),
-		cores: updateSeries(snapshot.disk.cores, sample.diskPartitions, pointCount),
-	},
-	network: {
-		usage: updateSeries(snapshot.network.usage, sample.networkUsage, pointCount),
-		cores: updateSeries(snapshot.network.cores, sample.networkInterfaces, pointCount),
-	},
-	gpu: {
-		usage: updateSeries(snapshot.gpu.usage, sample.gpuUsage, pointCount),
-		temperature: updateSeries(snapshot.gpu.temperature, sample.gpuTemperature, pointCount),
-		cores: updateSeries(snapshot.gpu.cores, sample.gpuCount, pointCount),
-	},
-});
 
 export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 	constructor(
@@ -110,7 +42,8 @@ export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 
 	start(onSnapshot: (snapshot: SystemMetricsSnapshot) => void) {
 		let snapshot = emptySnapshot();
-		let previousNetworkSample: { totalBytes: number; timestamp: number } | null = null;
+		let previousNetworkSamples: Array<{ totalBytes: number; timestamp: number }> = [];
+		let previousDiskIOSamples: Array<{ readBytes: number; writeBytes: number; timestamp: number }> = [];
 		let isDisposed = false;
 
 		const refresh = async () => {
@@ -128,18 +61,6 @@ export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 				}
 
 				const now = Date.now();
-				const networkTotalBytes = sumNetworkBytes(network.counters);
-				const networkUsage = previousNetworkSample
-					? clamp(
-						((Math.max(networkTotalBytes - previousNetworkSample.totalBytes, 0) * 8) /
-							Math.max((now - previousNetworkSample.timestamp) / 1000, 1)) /
-						1_000_000,
-						0,
-						100,
-					)
-					: 0;
-
-				previousNetworkSample = { totalBytes: networkTotalBytes, timestamp: now };
 
 				const cpuSpeed = average(cpu.info.map((info) => info.mhz ?? 0));
 				const cpuThreads = cpu.info.length;
@@ -150,34 +71,112 @@ export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 				const memoryTotal = memory.virtual?.total ?? 0;
 				const memoryUsed = memory.virtual?.used ?? 0;
 
-				const diskUsage = clamp(weightedAverage(disk.usages), 0, 100);
-				const diskTotal = disk.usages.reduce((sum, usage) => sum + (usage.total ?? 0), 0);
-				const diskPartitions = disk.usages.length;
+				const nextSnapshot: SystemMetricsSnapshot = {
+					memory: {
+						usage: updateSeries(snapshot.memory.usage, memoryUsage, this.pointCount),
+						available: updateSeries(snapshot.memory.available, memoryAvailable, this.pointCount),
+						total: updateSeries(snapshot.memory.total, memoryTotal, this.pointCount),
+						used: updateSeries(snapshot.memory.used, memoryUsed, this.pointCount),
+					},
+				};
 
-				const networkInterfaces = network.interfaces.length;
+				// Aggregate CPU percentages into a single device-level entry instead of per-logical-core.
+				const cpuPercentages = cpu.percentages?.length
+					? cpu.percentages
+					: cpu.info.length > 0
+						? Array.from({ length: cpu.info.length }, () => cpu.percentage)
+						: [cpu.percentage];
 
-				const gpuUsage = gpu.gpus.length > 0 ? average(gpu.gpus.map((g) => g.utilization)) : 0;
-				const gpuTemperature = gpu.gpus.length > 0 ? average(gpu.gpus.map((g) => g.temperature)) : 0;
-				const gpuCount = gpu.gpus.length;
+				const aggregatedCpuUsage = average(cpuPercentages);
+				const resourceId = `cpu:0`;
+				const primaryCpuInfo = cpu.info[0] ?? { mhz: cpuSpeed, cores: cpuThreads } as any;
+				const totalCores = (cpu.info || []).reduce((sum, info) => sum + (info.cores ?? 0), 0) || cpuCores;
 
-				snapshot = applySample(snapshot, {
-					cpuUsage: clamp(cpu.percentage, 0, 100),
-					cpuSpeed,
-					cpuThreads,
-					cpuCores,
-					memoryUsage,
-					memoryAvailable,
-					memoryTotal,
-					memoryUsed,
-					diskUsage,
-					diskTotal,
-					diskPartitions,
-					networkUsage,
-					networkInterfaces,
-					gpuUsage: clamp(gpuUsage, 0, 100),
-					gpuTemperature,
-					gpuCount,
-				}, this.pointCount);
+				nextSnapshot[resourceId] = {
+					usage: updateSeries(snapshot[resourceId]?.usage, clamp(aggregatedCpuUsage, 0, 100), this.pointCount),
+					speed: updateSeries(snapshot[resourceId]?.speed, primaryCpuInfo?.mhz ?? cpuSpeed, this.pointCount),
+					threads: updateSeries(snapshot[resourceId]?.threads, primaryCpuInfo?.cores ?? cpuThreads, this.pointCount),
+					cores: updateSeries(snapshot[resourceId]?.cores, totalCores, this.pointCount),
+				};
+
+				// Disk devices may be returned as aggregated `devices` (with IO counters)
+				// or the older `usages` array (per-partition). Support both shapes.
+				const rawDisk = disk as any;
+				let diskDevices: Array<{ name?: string; total?: number; usedPercent?: number; readBytes?: number; writeBytes?: number }> = [];
+				if (Array.isArray(rawDisk?.devices)) {
+					diskDevices = rawDisk.devices;
+				} else if (Array.isArray(rawDisk?.usages)) {
+					diskDevices = rawDisk.usages.map((u: any, idx: number) => ({ name: `disk${idx}`, total: u.total ?? 0, usedPercent: u.usedPercent ?? 0, readBytes: 0, writeBytes: 0 }));
+				}
+
+				if (diskDevices.length > 0) {
+					const nowDisk = now;
+					const nextDiskSamples = diskDevices.map((dev, index) => {
+						const previous = previousDiskIOSamples[index];
+						const readSpeed = previous
+							? Math.max(( (dev.readBytes ?? 0) - previous.readBytes) / Math.max((nowDisk - previous.timestamp) / 1000, 1), 0)
+							: 0;
+						const writeSpeed = previous
+							? Math.max(( (dev.writeBytes ?? 0) - previous.writeBytes) / Math.max((nowDisk - previous.timestamp) / 1000, 1), 0)
+							: 0;
+
+						return { readSpeed, writeSpeed };
+					});
+
+					previousDiskIOSamples = diskDevices.map((dev) => ({ readBytes: dev.readBytes ?? 0, writeBytes: dev.writeBytes ?? 0, timestamp: nowDisk }));
+
+					diskDevices.forEach((dev, index) => {
+						const resourceId = `disk:${index}`;
+						nextSnapshot[resourceId] = {
+							usage: updateSeries(snapshot[resourceId]?.usage, clamp(dev.usedPercent ?? 0, 0, 100), this.pointCount),
+							total: updateSeries(snapshot[resourceId]?.total, dev.total ?? 0, this.pointCount),
+							readSpeed: updateSeries(snapshot[resourceId]?.readSpeed, nextDiskSamples[index].readSpeed, this.pointCount),
+							writeSpeed: updateSeries(snapshot[resourceId]?.writeSpeed, nextDiskSamples[index].writeSpeed, this.pointCount),
+							cores: updateSeries(snapshot[resourceId]?.cores, diskDevices.length, this.pointCount),
+						};
+					});
+				}
+
+				const nextNetworkSamples = Array.isArray(network?.counters)
+					? network.counters.map((counter: any, index: number) => {
+					const totalBytes = (counter.bytesRecv ?? 0) + (counter.bytesSent ?? 0);
+					const previous = previousNetworkSamples[index];
+					const usage = previous
+						? clamp(
+							((Math.max(totalBytes - previous.totalBytes, 0) * 8) /
+								Math.max((now - previous.timestamp) / 1000, 1)) /
+							1_000_000,
+							0,
+							100,
+						)
+						: 0;
+						return { totalBytes, timestamp: now, usage };
+					})
+					: [];
+				previousNetworkSamples = nextNetworkSamples.map(({ totalBytes, timestamp }) => ({ totalBytes, timestamp }));
+
+				nextNetworkSamples.forEach((sample, index) => {
+					const resourceId = `network:${index}`;
+					nextSnapshot[resourceId] = {
+						usage: updateSeries(snapshot[resourceId]?.usage, sample.usage, this.pointCount),
+						cores: updateSeries(snapshot[resourceId]?.cores, network.interfaces?.length ?? 0, this.pointCount),
+					};
+				});
+
+				if (Array.isArray(gpu?.gpus)) {
+					gpu.gpus.forEach((gpuStat: any, index: number) => {
+						const resourceId = `gpu:${index}`;
+						nextSnapshot[resourceId] = {
+							usage: updateSeries(snapshot[resourceId]?.usage, clamp(gpuStat.utilization, 0, 100), this.pointCount),
+							temperature: updateSeries(snapshot[resourceId]?.temperature, gpuStat.temperature, this.pointCount),
+							memoryUsed: updateSeries(snapshot[resourceId]?.memoryUsed, gpuStat.memoryUsed, this.pointCount),
+							memoryTotal: updateSeries(snapshot[resourceId]?.memoryTotal, gpuStat.memoryTotal, this.pointCount),
+							memoryFree: updateSeries(snapshot[resourceId]?.memoryFree, gpuStat.memoryFree, this.pointCount),
+						};
+					});
+				}
+
+				snapshot = nextSnapshot;
 
 				onSnapshot(snapshot);
 			} catch (error) {

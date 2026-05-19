@@ -1,13 +1,12 @@
 import React from 'react';
-import { type ResourceKey } from '../metrics';
 import { useResourceDetailMetrics } from '../hooks';
 
 interface ResourceDetailMetricsProps {
-	resourceKey: ResourceKey;
+	resourceId: string;
 }
 
-const ResourceDetailMetrics: React.FC<ResourceDetailMetricsProps> = ({ resourceKey }) => {
-	const metricValues = useResourceDetailMetrics(resourceKey);
+const ResourceDetailMetrics: React.FC<ResourceDetailMetricsProps> = ({ resourceId }) => {
+	const metricValues = useResourceDetailMetrics(resourceId);
 
 	if (metricValues.length === 0) {
 		return null;

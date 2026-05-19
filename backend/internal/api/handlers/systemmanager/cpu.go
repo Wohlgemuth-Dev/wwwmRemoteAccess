@@ -6,8 +6,9 @@ import (
 )
 
 type CPUResponse struct {
-	Percentage float64        `json:"percentage"`
-	Info       []cpu.InfoStat `json:"info"`
+	Percentage  float64        `json:"percentage"`
+	Percentages []float64      `json:"percentages"`
+	Info        []cpu.InfoStat `json:"info"`
 }
 
 func CPUHandler(c *fiber.Ctx) error {
@@ -30,7 +31,8 @@ func CPUHandler(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(CPUResponse{
-		Percentage: percentage,
-		Info:       info,
+		Percentage:  percentage,
+		Percentages: percents,
+		Info:        info,
 	})
 }

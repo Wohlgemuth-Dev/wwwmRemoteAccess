@@ -1,4 +1,4 @@
-import { ProcessData, ProcessTreeNode, SortColumn, SortState } from './types';
+import type { ProcessData, ProcessTreeNode, SortState } from './types';
 
 /**
  * Build a hierarchical tree of processes based on parent-child relationships
