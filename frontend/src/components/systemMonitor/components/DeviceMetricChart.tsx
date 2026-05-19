@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
 	CartesianGrid,
 	Line,
 	Area,
 	AreaChart,
-	ResponsiveContainer,
 	Tooltip,
 	XAxis,
 	YAxis,
@@ -65,6 +64,9 @@ const DeviceMetricChart = ({
 	data,
 }: DeviceMetricChartProps) => {
 	const [internalData, setInternalData] = useState<ChartPoint[]>(() => buildInitialData(pointCount, initialValue, min, max));
+	const containerRef = useRef<HTMLDivElement>(null);
+	const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+	const [isLayoutReady, setIsLayoutReady] = useState(false);
 
 	const gradId = useMemo(() => `grad-${Math.random().toString(36).slice(2, 9)}`, []);
 
@@ -97,10 +99,46 @@ const DeviceMetricChart = ({
 		return () => window.clearInterval(intervalId);
 	}, [compact, initialValue, max, min, data]);
 
+	useLayoutEffect(() => {
+		const frameId = window.requestAnimationFrame(() => {
+			setIsLayoutReady(true);
+		});
+
+		return () => window.cancelAnimationFrame(frameId);
+	}, []);
+
+	useLayoutEffect(() => {
+		const element = containerRef.current;
+		if (!element) {
+			return;
+		}
+
+		const updateSize = () => {
+			const { width, height } = element.getBoundingClientRect();
+			setContainerSize({ width, height });
+		};
+
+		updateSize();
+
+		const observer = new ResizeObserver(updateSize);
+		observer.observe(element);
+
+		return () => observer.disconnect();
+	}, [compact]);
+
+	const hasRenderableSize = isLayoutReady && containerSize.width > 0 && containerSize.height > 0;
+	const chartWidth = Math.max(Math.floor(containerSize.width), 1);
+	const chartHeight = Math.max(Math.floor(containerSize.height), compact ? 72 : 240);
+
 	return (
-		<div className={`DeviceMetricChart${compact ? ' is-compact' : ''}`}>
-			<ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={compact ? 72 : 240}>
-				<AreaChart data={data ?? internalData} margin={{ top: compact ? 0 : 8, right: compact ? 0 : 8, bottom: compact ? 0 : 12, left: compact ? 0 : 8 }}>
+		<div ref={containerRef} className={`DeviceMetricChart${compact ? ' is-compact' : ''}`}>
+			{hasRenderableSize && (
+				<AreaChart
+					width={chartWidth}
+					height={chartHeight}
+					data={data ?? internalData}
+					margin={{ top: compact ? 0 : 8, right: compact ? 0 : 8, bottom: compact ? 0 : 12, left: compact ? 0 : 8 }}
+				>
 					<defs>
 						<linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
 							<stop offset="0%" stopColor={HEX_TO_RGBA(color, 0.4)} />
@@ -153,7 +191,7 @@ const DeviceMetricChart = ({
 						isAnimationActive={false}
 					/>
 				</AreaChart>
-			</ResponsiveContainer>
+			)}
 		</div>
 	);
 };
