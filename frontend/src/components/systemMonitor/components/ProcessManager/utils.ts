@@ -22,8 +22,9 @@ export const buildProcessTree = (processes: ProcessData[]): ProcessTreeNode[] =>
 	processes.forEach((process) => {
 		const node = processMap.get(process.pid)!;
 		const parent = processMap.get(process.ppid);
+		const hasValidParent = Boolean(parent) && process.ppid > 0 && process.ppid !== process.pid;
 
-		if (parent) {
+		if (hasValidParent && parent) {
 			parent.children.push(node);
 			node.level = parent.level + 1;
 		} else {

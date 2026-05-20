@@ -3,14 +3,14 @@ import ProcessTable from './ProcessManager/ProcessTable';
 import { useProcessData } from './ProcessManager/useProcessData';
 
 const ProcessManager: React.FC = () => {
-	const [processTree, deleteProcess] = useProcessData();
+	const [processTree, killProcess] = useProcessData();
 
 	return (
 		<div className="ProcessManager">
 			<div className="ProcessManagerHeader">
 				<h1>Process Manager</h1>
 			</div>
-			<ProcessTable processes={processTree} onDelete={deleteProcess} />
+			<ProcessTable processes={processTree} onKill={killProcess} />
 		</div>
 	);
 };

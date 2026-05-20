@@ -9,12 +9,17 @@ export type MetricKey =
 	| 'total'
 	| 'used'
 	| 'swap'
+	| 'swapUsed'
 	| 'temperature'
 	| 'memoryUsed'
 	| 'memoryFree'
 	| 'memoryTotal'
 	| 'readSpeed'
-	| 'writeSpeed';
+	| 'writeSpeed'
+	| 'readBytes'
+	| 'writeBytes'
+	| 'bytesRecv'
+	| 'bytesSent';
 
 
 export interface ChartPoint {

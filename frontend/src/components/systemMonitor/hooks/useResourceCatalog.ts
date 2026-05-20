@@ -30,6 +30,7 @@ const CPU_SPEED_CONVERSION_FACTOR = 1000;
 const CPU_SPEED_DECIMALS = 2;
 const DEFAULT_DECIMALS = 0;
 const BYTES_TO_GB = 1_073_741_824;
+const BYTES_TO_MB = 1_048_576;
 
 interface SingletonResourceMetadata {
 	title: string;
@@ -63,7 +64,9 @@ const memoryResourceMetadata: SingletonResourceMetadata = {
 	detailMetrics: [
 		{ metricKey: 'used', label: 'Used', unit: ' GB', decimals: 2, conversionFactor: BYTES_TO_GB },
 		{ metricKey: 'total', label: 'Total', unit: ' GB', decimals: 2, conversionFactor: BYTES_TO_GB },
-		{ metricKey: 'available', label: 'Available', unit: '%', decimals: DEFAULT_DECIMALS },
+			{ metricKey: 'available', label: 'Available', unit: '%', decimals: DEFAULT_DECIMALS },
+			{ metricKey: 'swap', label: 'Swap %', unit: '%', decimals: DEFAULT_DECIMALS },
+			{ metricKey: 'swapUsed', label: 'Swap Used', unit: ' GB', decimals: 2, conversionFactor: BYTES_TO_GB },
 	],
 };
 
@@ -95,7 +98,9 @@ const instanceResourceMetadata: Record<InstanceResourceKey, SingletonResourceMet
 		detailMetrics: [
 			{ metricKey: 'usage', label: 'Utilization', unit: '%' },
 			{ metricKey: 'total', label: 'Total', unit: ' GB', decimals: 2, conversionFactor: BYTES_TO_GB },
-			{ metricKey: 'cores', label: 'Devices', unit: '', decimals: DEFAULT_DECIMALS },
+				{ metricKey: 'cores', label: 'Devices', unit: '', decimals: DEFAULT_DECIMALS },
+				{ metricKey: 'readBytes', label: 'Read', unit: ' GB', decimals: 2, conversionFactor: BYTES_TO_GB },
+				{ metricKey: 'writeBytes', label: 'Write', unit: ' GB', decimals: 2, conversionFactor: BYTES_TO_GB },
 		],
 	},
 	network: {
@@ -110,6 +115,8 @@ const instanceResourceMetadata: Record<InstanceResourceKey, SingletonResourceMet
 		detailMetrics: [
 			{ metricKey: 'usage', label: 'Throughput', unit: ' Mbps' },
 			{ metricKey: 'cores', label: 'Interfaces', unit: '', decimals: DEFAULT_DECIMALS },
+				{ metricKey: 'bytesRecv', label: 'Received', unit: ' MB', decimals: 1, conversionFactor: BYTES_TO_MB },
+				{ metricKey: 'bytesSent', label: 'Sent', unit: ' MB', decimals: 1, conversionFactor: BYTES_TO_MB },
 		],
 	},
 	gpu: {

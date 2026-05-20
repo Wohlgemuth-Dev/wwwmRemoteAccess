@@ -1,6 +1,7 @@
 import React from 'react';
 import DeviceMetricChart from './DeviceMetricChart';
 import ResourceDetailMetrics from './ResourceDetailMetrics';
+import ResourceInfoCards from './ResourceInfoCards';
 import { useSystemMetrics, type ChartPoint } from '../metrics';
 import { useResourceCatalog } from '../hooks';
 
@@ -110,13 +111,16 @@ const SystemResources: React.FC = () => {
                         initialValue={selectedIsDisk ? undefined : selectedDetail.initialValue}
                         unit={selectedChartUnit}
                         primarySeriesLabel={selectedIsDisk ? 'Read' : undefined}
-                        series={selectedIsDisk ? [
+                        series={selectedDetail.id === 'memory' ? [
+                            { dataKey: 'swap', label: 'Swap', color: '#60a5fa', unit: '%' },
+                        ] : selectedIsDisk ? [
                             { dataKey: 'readSpeed', label: 'Read', color: '#60a5fa', unit: ' KB/s' },
                             { dataKey: 'writeSpeed', label: 'Write', color: '#f97316', unit: ' KB/s' },
                         ] : []}
                     />
                 </div>
                 <ResourceDetailMetrics resourceId={selectedDetail.id} />
+                <ResourceInfoCards resourceId={selectedDetail.id} />
             </div>
         </div>
     );

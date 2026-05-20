@@ -83,4 +83,5 @@ export const systemManagerApi = {
 	getNetwork: () => apiClient.get<NetworkResponse>('/api/systemmanager/network'),
 	getGpu: () => apiClient.get<GPUResponse>('/api/systemmanager/gpu'),
 	getProcesses: () => apiClient.get<ProcessInfo[]>('/api/systemmanager/processes'),
+	killProcess: (pid: number) => apiClient.post<{ ok: boolean; pid: number }>('/api/systemmanager/processes/kill', { pid }),
 };

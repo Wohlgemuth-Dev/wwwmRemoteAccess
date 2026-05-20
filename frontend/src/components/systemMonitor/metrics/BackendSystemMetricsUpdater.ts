@@ -70,6 +70,8 @@ export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 				const memoryAvailable = clamp(100 - memoryUsage, 0, 100);
 				const memoryTotal = memory.virtual?.total ?? 0;
 				const memoryUsed = memory.virtual?.used ?? 0;
+	                const memorySwapPercent = clamp(memory.swap?.usedPercent ?? 0, 0, 100);
+	                const memorySwapUsed = memory.swap?.used ?? 0;
 
 				const nextSnapshot: SystemMetricsSnapshot = {
 					memory: {
@@ -77,6 +79,8 @@ export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 						available: updateSeries(snapshot.memory.available, memoryAvailable, this.pointCount),
 						total: updateSeries(snapshot.memory.total, memoryTotal, this.pointCount),
 						used: updateSeries(snapshot.memory.used, memoryUsed, this.pointCount),
+						swap: updateSeries(snapshot.memory.swap, memorySwapPercent, this.pointCount),
+						swapUsed: updateSeries(snapshot.memory.swapUsed, memorySwapUsed, this.pointCount),
 					},
 				};
 
@@ -132,6 +136,8 @@ export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 							total: updateSeries(snapshot[resourceId]?.total, dev.total ?? 0, this.pointCount),
 							readSpeed: updateSeries(snapshot[resourceId]?.readSpeed, nextDiskSamples[index].readSpeed, this.pointCount),
 							writeSpeed: updateSeries(snapshot[resourceId]?.writeSpeed, nextDiskSamples[index].writeSpeed, this.pointCount),
+							readBytes: updateSeries(snapshot[resourceId]?.readBytes, dev.readBytes ?? 0, this.pointCount),
+							writeBytes: updateSeries(snapshot[resourceId]?.writeBytes, dev.writeBytes ?? 0, this.pointCount),
 							cores: updateSeries(snapshot[resourceId]?.cores, diskDevices.length, this.pointCount),
 						};
 					});
@@ -157,9 +163,12 @@ export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 
 				nextNetworkSamples.forEach((sample, index) => {
 					const resourceId = `network:${index}`;
+					const counter = (Array.isArray(network?.counters) && network.counters[index]) || {};
 					nextSnapshot[resourceId] = {
 						usage: updateSeries(snapshot[resourceId]?.usage, sample.usage, this.pointCount),
 						cores: updateSeries(snapshot[resourceId]?.cores, network.interfaces?.length ?? 0, this.pointCount),
+						bytesRecv: updateSeries(snapshot[resourceId]?.bytesRecv, counter.bytesRecv ?? 0, this.pointCount),
+						bytesSent: updateSeries(snapshot[resourceId]?.bytesSent, counter.bytesSent ?? 0, this.pointCount),
 					};
 				});
 

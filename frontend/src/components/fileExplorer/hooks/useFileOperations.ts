@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ItemMenuAction } from './types';
 import { fileExplorerApi } from '../../../service/api/fileexplorer';
-import { getItemNamesFromPaths } from '../utils';
+import { confirmBulkAction, getItemNamesFromPaths } from '../utils';
 
 interface UseFileOperationsParams {
     currentPath: string;
@@ -140,7 +140,7 @@ export const useFileOperations = ({ currentPath, setCurrentPath, closeItemMenu, 
         }
 
         const itemNames = getItemNamesFromPaths(itemPaths);
-        if (!window.confirm(`Are you sure you want to delete the following items?\n\n${itemNames.join('\n')}`)) {
+        if (!confirmBulkAction('delete', itemNames)) {
             return;
         }
 

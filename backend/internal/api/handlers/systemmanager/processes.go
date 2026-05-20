@@ -15,6 +15,10 @@ type ProcessInfo struct {
 	Status        string  `json:"status"` // using string, we'll format it if it's []string
 }
 
+type killProcessRequest struct {
+	Pid int32 `json:"pid"`
+}
+
 func ProcessesHandler(c *fiber.Ctx) error {
 	procs, err := process.Processes()
 	if err != nil {
@@ -29,7 +33,7 @@ func ProcessesHandler(c *fiber.Ctx) error {
 		mem, _ := p.MemoryPercent()
 		cpu, _ := p.CPUPercent()
 		ppid, _ := p.Ppid()
-		
+
 		var statusStr string
 		status, err := p.Status()
 		if err == nil {
@@ -50,4 +54,22 @@ func ProcessesHandler(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(processList)
+}
+
+func KillProcessHandler(c *fiber.Ctx) error {
+	var req killProcessRequest
+	if err := c.BodyParser(&req); err != nil || req.Pid <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid pid"})
+	}
+
+	p, err := process.NewProcess(req.Pid)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "process not found"})
+	}
+
+	if err := p.Kill(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to kill process"})
+	}
+
+	return c.JSON(fiber.Map{"ok": true, "pid": req.Pid})
 }

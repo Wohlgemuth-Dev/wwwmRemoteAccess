@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { ProcessTreeNode, SortColumn, SortState } from './types';
 import { flattenProcessTree, sortProcessTree, toggleProcessExpansion } from './utils';
+import { confirmBulkAction } from '../../../fileExplorer/utils';
 
 const mergeExpansionState = (nextTree: ProcessTreeNode[], currentTree: ProcessTreeNode[]): ProcessTreeNode[] => {
 	const currentByPid = new Map<number, ProcessTreeNode>();
@@ -31,13 +32,13 @@ const mergeExpansionState = (nextTree: ProcessTreeNode[], currentTree: ProcessTr
 
 interface ProcessTableProps {
 	processes: ProcessTreeNode[];
-	onDelete?: (pid: number) => void;
+	onKill?: (pid: number) => Promise<void>;
 }
 
-const ProcessTable: React.FC<ProcessTableProps> = ({ processes: initialProcesses, onDelete }) => {
+const ProcessTable: React.FC<ProcessTableProps> = ({ processes: initialProcesses, onKill }) => {
 	const [tree, setTree] = useState(initialProcesses);
 	const [sortState, setSortState] = useState<SortState>({ column: 'name', order: 'asc' });
-	const [contextMenu, setContextMenu] = useState<null | { x: number; y: number; pid: number }>(null);
+	const [contextMenu, setContextMenu] = useState<null | { x: number; y: number; pid: number; name: string }>(null);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
@@ -63,9 +64,9 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes: initialProcesses
 		setTree((prevTree) => toggleProcessExpansion(prevTree, pid));
 	}, []);
 
-	const handleContextMenu = (e: React.MouseEvent, pid: number) => {
+	const handleContextMenu = (e: React.MouseEvent, pid: number, name: string) => {
 		e.preventDefault();
-		setContextMenu({ x: e.clientX, y: e.clientY, pid });
+		setContextMenu({ x: e.clientX, y: e.clientY, pid, name });
 	};
 
 	useEffect(() => {
@@ -100,11 +101,18 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes: initialProcesses
 		</button>
 	);
 
-	const handleDelete = () => {
-		if (onDelete && contextMenu) {
-			onDelete(contextMenu.pid);
-			setContextMenu(null);
+	const handleKill = async () => {
+		if (!onKill || !contextMenu) {
+			return;
 		}
+
+		const accepted = confirmBulkAction('kill', [`${contextMenu.name} (PID ${contextMenu.pid})`]);
+		if (!accepted) {
+			return;
+		}
+
+		await onKill(contextMenu.pid);
+		setContextMenu(null);
 	};
 
 	return (
@@ -124,7 +132,7 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes: initialProcesses
 						<tr
 							key={`${process.pid}-${process.level}`}
 							className={`ProcessRow level-${process.level}`}
-							onContextMenu={(e) => handleContextMenu(e, process.pid)}
+							onContextMenu={(e) => handleContextMenu(e, process.pid, process.name)}
 						>
 							<td className="ProcessNameCell">
 								<div className="ProcessNameContent" style={{ marginLeft: `${process.level * 20}px` }}>
@@ -162,8 +170,8 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes: initialProcesses
 					onClick={(e) => e.stopPropagation()}
 					onContextMenu={(e) => e.preventDefault()}
 				>
-					<button type="button" className="file-item-menu-item" onClick={handleDelete}>
-						Delete
+					<button type="button" className="file-item-menu-item" onClick={handleKill}>
+						Kill
 					</button>
 				</div>
 			)}
