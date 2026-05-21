@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../service/api/client';
+import { apiClient } from '../../../service/api/client';
 
 export interface ClockResponse {
     status: string;
@@ -52,3 +52,5 @@ export const useServerTime = (syncIntervalMs = 30000) => {
 
     return systemTime;
 };
+
+export default useServerTime;

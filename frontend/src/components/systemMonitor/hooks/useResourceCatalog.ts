@@ -113,8 +113,7 @@ const instanceResourceMetadata: Record<InstanceResourceKey, SingletonResourceMet
 		max: 100,
 		initialValue: 20,
 		detailMetrics: [
-			{ metricKey: 'usage', label: 'Throughput', unit: ' Mbps' },
-			{ metricKey: 'cores', label: 'Interfaces', unit: '', decimals: DEFAULT_DECIMALS },
+			{ metricKey: 'usage', label: 'Throughput', unit: ' Mbps', decimals: 2 },
 				{ metricKey: 'bytesRecv', label: 'Received', unit: ' MB', decimals: 1, conversionFactor: BYTES_TO_MB },
 				{ metricKey: 'bytesSent', label: 'Sent', unit: ' MB', decimals: 1, conversionFactor: BYTES_TO_MB },
 		],

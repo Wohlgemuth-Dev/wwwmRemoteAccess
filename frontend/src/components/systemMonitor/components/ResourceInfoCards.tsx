@@ -1,27 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { systemManagerApi } from '../../../service/api/systemmanager';
+import MetricCards, { type MetricCardItem } from './MetricCards';
+import { formatBytes } from '../utils';
 
 interface Props {
     resourceId: string;
 }
 
-const formatBytes = (bytes: number) => {
-    if (!bytes) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    let i = 0;
-    let v = bytes;
-    while (v >= 1024 && i < units.length - 1) {
-        v /= 1024;
-        i += 1;
-    }
-    return `${typeof v === 'number' ? v.toFixed(2) : v} ${units[i]}`;
-};
+// Removed the local formatBytes function as it is now imported from utils
 
 const ResourceInfoCards: React.FC<Props> = ({ resourceId }) => {
-    const [info, setInfo] = useState<Record<string, string>>({});
+    const [info, setInfo] = useState<MetricCardItem[]>([]);
 
     useEffect(() => {
-        let cancelled = false;
 
         const load = async () => {
             try {
@@ -29,44 +20,58 @@ const ResourceInfoCards: React.FC<Props> = ({ resourceId }) => {
                     const res = await systemManagerApi.getCpu();
                     const model = res.info?.[0]?.modelName ?? '';
                     const mhz = res.info?.[0]?.mhz ?? undefined;
-                    setInfo({ 'Model': model || 'Unknown', 'Base MHz': mhz ? `${mhz}` : 'n/a' });
+                    setInfo([
+                        { key: 'model', label: 'Model', value: model || 'Unknown' },
+                        { key: 'base-mhz', label: 'Base MHz', value: mhz !== undefined && mhz !== null ? `${mhz}` : 'n/a' },
+                    ]);
                 } else if (resourceId === 'memory') {
                     const res = await systemManagerApi.getMemory();
                     const swap = res.swap;
-                    setInfo({
-                        'Swap Total': swap?.total ? formatBytes(swap.total) : 'n/a',
-                        'Swap Used': swap?.used ? formatBytes(swap.used) : 'n/a',
-                        'Swap %': swap?.usedPercent !== undefined ? `${Math.round(swap.usedPercent)}%` : 'n/a',
-                    });
+                    // prefer explicit used value, otherwise compute from total and percent when possible
+                    const swapTotalAvailable = swap?.total !== undefined && swap?.total !== null;
+                    const swapPercentAvailable = swap?.usedPercent !== undefined && swap?.usedPercent !== null;
+                    const swapUsedAvailable = swap?.used !== undefined && swap?.used !== null;
+                    let swapUsedComputed: number | undefined = undefined;
+                    if (swapUsedAvailable) {
+                        swapUsedComputed = swap!.used as number;
+                    } else if (swapTotalAvailable && swapPercentAvailable) {
+                        swapUsedComputed = Math.round((swap!.total as number) * (swap!.usedPercent as number) / 100);
+                    }
+
+                    setInfo([
+                        { key: 'swap-total', label: 'Swap Total', value: swapTotalAvailable ? formatBytes(swap!.total as number) : 'n/a' },
+                        { key: 'swap-used', label: 'Swap Used', value: swapUsedComputed !== undefined ? formatBytes(swapUsedComputed) : 'n/a' },
+                        { key: 'swap-percent', label: 'Swap %', value: swapPercentAvailable ? `${Math.round(swap!.usedPercent as number)}%` : 'n/a' },
+                    ]);
                 } else if (resourceId.startsWith('disk')) {
                     const res = await systemManagerApi.getDisk();
                     const idx = Number(resourceId.split(':')[1] ?? 0);
                     const dev = (res as any)?.devices?.[idx] ?? (res as any)?.usages?.[idx];
                     if (dev) {
-                        setInfo({
-                            'Device': dev.name ?? `disk:${idx}`,
-                            'Total': dev.total ? formatBytes(dev.total) : 'n/a',
-                            'Read': dev.readBytes ? formatBytes(dev.readBytes) : 'n/a',
-                            'Write': dev.writeBytes ? formatBytes(dev.writeBytes) : 'n/a',
-                        });
+                        setInfo([
+                            { key: 'device', label: 'Device', value: dev.name ?? `disk:${idx}` },
+                            { key: 'total', label: 'Total', value: dev.total !== undefined && dev.total !== null ? formatBytes(dev.total) : 'n/a' },
+                            { key: 'read', label: 'Read', value: dev.readBytes !== undefined && dev.readBytes !== null ? formatBytes(dev.readBytes) : 'n/a' },
+                            { key: 'write', label: 'Write', value: dev.writeBytes !== undefined && dev.writeBytes !== null ? formatBytes(dev.writeBytes) : 'n/a' },
+                        ]);
                     } else {
-                        setInfo({ 'Device': `disk:${idx}` });
+                        setInfo([{ key: 'device', label: 'Device', value: `disk:${idx}` }]);
                     }
                 } else if (resourceId.startsWith('network')) {
                     const res = await systemManagerApi.getNetwork();
                     const idx = Number(resourceId.split(':')[1] ?? 0);
                     const iface = (res as any)?.interfaces?.[idx];
                     const counter = (res as any)?.counters?.[idx];
-                    const items: Record<string, string> = {};
+                    const items: MetricCardItem[] = [];
                     if (iface) {
-                        items['Interface'] = iface.name ?? iface.iface ?? `network:${idx}`;
+                        items.push({ key: 'interface', label: 'Interface', value: iface.name ?? iface.iface ?? `network:${idx}` });
                         const addrs = (iface.addrs || []).map((a: any) => a.addr || a.ip || '').filter(Boolean).join(', ');
-                        if (addrs) items['Addresses'] = addrs;
+                        if (addrs) items.push({ key: 'addresses', label: 'Addresses', value: addrs });
                     }
                     if (counter) {
-                        items['Bytes Received'] = formatBytes(counter.bytesRecv ?? 0);
-                        items['Bytes Sent'] = formatBytes(counter.bytesSent ?? 0);
-                        items['Packets'] = `${counter.packetsRecv ?? 0} recv / ${counter.packetsSent ?? 0} sent`;
+                        items.push({ key: 'bytes-received', label: 'Bytes Received', value: formatBytes(counter.bytesRecv ?? 0) });
+                        items.push({ key: 'bytes-sent', label: 'Bytes Sent', value: formatBytes(counter.bytesSent ?? 0) });
+                        items.push({ key: 'packets', label: 'Packets', value: `${counter.packetsRecv ?? 0} recv / ${counter.packetsSent ?? 0} sent` });
                     }
                     setInfo(items);
                 } else if (resourceId.startsWith('gpu')) {
@@ -74,13 +79,13 @@ const ResourceInfoCards: React.FC<Props> = ({ resourceId }) => {
                     const idx = Number(resourceId.split(':')[1] ?? 0);
                     const gpu = (res as any)?.gpus?.[idx];
                     const error = (res as any)?.error;
-                    const items: Record<string, string> = {};
-                    if (error) items['GPU Error'] = error;
+                    const items: MetricCardItem[] = [];
+                    if (error) items.push({ key: 'gpu-error', label: 'GPU Error', value: error });
                     if (gpu) {
-                        items['Name'] = gpu.name ?? `gpu:${idx}`;
-                        items['Memory Total'] = gpu.memoryTotal ? formatBytes(gpu.memoryTotal) : 'n/a';
-                        items['Memory Used'] = gpu.memoryUsed ? formatBytes(gpu.memoryUsed) : 'n/a';
-                        items['Temperature'] = gpu.temperature !== undefined ? `${gpu.temperature} °C` : 'n/a';
+                        items.push({ key: 'name', label: 'Name', value: gpu.name ?? `gpu:${idx}` });
+                        items.push({ key: 'memory-total', label: 'Memory Total', value: gpu.memoryTotal !== undefined && gpu.memoryTotal !== null ? formatBytes(gpu.memoryTotal) : 'n/a' });
+                        items.push({ key: 'memory-used', label: 'Memory Used', value: gpu.memoryUsed !== undefined && gpu.memoryUsed !== null ? formatBytes(gpu.memoryUsed) : 'n/a' });
+                        items.push({ key: 'temperature', label: 'Temperature', value: gpu.temperature !== undefined ? `${gpu.temperature} °C` : 'n/a' });
                     }
                     setInfo(items);
                 }
@@ -96,23 +101,13 @@ const ResourceInfoCards: React.FC<Props> = ({ resourceId }) => {
         }, 5000);
 
         return () => {
-            cancelled = true;
             window.clearInterval(id);
         };
     }, [resourceId]);
 
-    if (!info || Object.keys(info).length === 0) return null;
+    if (info.length === 0) return null;
 
-    return (
-        <div className="ResourceInfoCards">
-            {Object.entries(info).map(([k, v]) => (
-                <div key={k} className="DetailMetricItem">
-                    <div className="DetailMetricLabel">{k}</div>
-                    <div className="DetailMetricValue">{v}</div>
-                </div>
-            ))}
-        </div>
-    );
+    return <MetricCards className="ResourceInfoCards" items={info} />;
 };
 
 export default ResourceInfoCards;

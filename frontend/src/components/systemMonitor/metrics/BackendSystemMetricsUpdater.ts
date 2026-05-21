@@ -62,7 +62,8 @@ export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 
 				const now = Date.now();
 
-				const cpuSpeed = average(cpu.info.map((info) => info.mhz ?? 0));
+				const apiCurrentMhz = (cpu as any)?.current_mhz ?? (cpu as any)?.currentMhz;
+				const cpuSpeed = apiCurrentMhz ?? average(cpu.info.map((info) => info.mhz ?? 0));
 				const cpuThreads = cpu.info.length;
 				const cpuCores = cpu.info.length;
 
@@ -96,9 +97,12 @@ export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 				const primaryCpuInfo = cpu.info[0] ?? { mhz: cpuSpeed, cores: cpuThreads } as any;
 				const totalCores = (cpu.info || []).reduce((sum, info) => sum + (info.cores ?? 0), 0) || cpuCores;
 
+				// prefer the API-provided current MHz if available
+				const speedValue = (cpu as any)?.current_mhz ?? primaryCpuInfo?.mhz ?? cpuSpeed;
+
 				nextSnapshot[resourceId] = {
 					usage: updateSeries(snapshot[resourceId]?.usage, clamp(aggregatedCpuUsage, 0, 100), this.pointCount),
-					speed: updateSeries(snapshot[resourceId]?.speed, primaryCpuInfo?.mhz ?? cpuSpeed, this.pointCount),
+					speed: updateSeries(snapshot[resourceId]?.speed, speedValue, this.pointCount),
 					threads: updateSeries(snapshot[resourceId]?.threads, primaryCpuInfo?.cores ?? cpuThreads, this.pointCount),
 					cores: updateSeries(snapshot[resourceId]?.cores, totalCores, this.pointCount),
 				};

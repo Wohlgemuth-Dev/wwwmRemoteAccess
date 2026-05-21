@@ -122,8 +122,8 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes: initialProcesses
 					<tr role="row">
 						<th role="columnheader">{renderSortHeader('name', 'Process Name')}</th>
 						<th role="columnheader">{renderSortHeader('pid', 'PID')}</th>
-						<th role="columnheader">{renderSortHeader('cpu', 'CPU %')}</th>
-						<th role="columnheader">{renderSortHeader('memory', 'Memory (%)')}</th>
+						<th role="columnheader">{renderSortHeader('cpu', 'CPU % (per core)')}</th>
+						<th role="columnheader">{renderSortHeader('memory', 'Memory %')}</th>
 						<th role="columnheader">{renderSortHeader('status', 'Status')}</th>
 					</tr>
 				</thead>

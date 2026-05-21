@@ -10,6 +10,9 @@ export interface CpuResponse {
 	percentage: number;
 	percentages?: number[];
 	info: CpuInfoStat[];
+	// optional current MHz provided by backend (may be snake_case or camelCase)
+	current_mhz?: number;
+	currentMhz?: number;
 }
 
 export interface MemoryStat {

@@ -28,6 +28,9 @@ interface DeviceMetricChartProps {
 	color: string;
 	axes: ChartAxes;
 	compact?: boolean;
+	showArea?: boolean;
+	valueDecimals?: number;
+	interpolation?: 'monotone' | 'linear';
 	pointCount?: number;
 	min?: number;
 	max?: number;
@@ -69,6 +72,9 @@ const DeviceMetricChart = ({
 	color,
 	axes,
 	compact = false,
+	showArea = true,
+	valueDecimals = 0,
+	interpolation = 'monotone',
 	pointCount = DEFAULT_POINT_COUNT,
 	min = 0,
 	max = 100,
@@ -78,6 +84,8 @@ const DeviceMetricChart = ({
 	data,
 	series = [],
 }: DeviceMetricChartProps) => {
+
+	// no debug logging in production
 	const [internalData, setInternalData] = useState<ChartPoint[]>(() => buildInitialData(pointCount, initialValue, min, max));
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -143,7 +151,7 @@ const DeviceMetricChart = ({
 						<div key={dataKey} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
 							<span style={{ width: 8, height: 8, borderRadius: 999, background: entryColor, flex: '0 0 auto' }} />
 							<span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{entryLabel}</span>
-							<span style={{ fontSize: 12, marginLeft: 'auto' }}>{`${value.toFixed(0)}${entryUnit}`}</span>
+							<span style={{ fontSize: 12, marginLeft: 'auto' }}>{`${value.toFixed(valueDecimals)}${entryUnit}`}</span>
 						</div>
 					);
 				})}
@@ -156,8 +164,9 @@ const DeviceMetricChart = ({
 	}, [pointCount, initialValue, min, max]);
 
 	useEffect(() => {
-		// only run internal generator when no external `data` is supplied
-		if (data) return;
+		// only run internal generator when no external `data` is supplied or
+		// when the external data is an empty array (treat empty as no-data)
+		if (data && Array.isArray(data) && data.length > 0) return;
 
 		const intervalId = window.setInterval(() => {
 			setInternalData((currentData) => {
@@ -201,7 +210,11 @@ const DeviceMetricChart = ({
 
 	const hasRenderableSize = isLayoutReady && containerSize.width > 0 && containerSize.height > 0;
 	const chartWidth = Math.max(Math.floor(containerSize.width), 1);
-	const chartHeight = Math.max(Math.floor(containerSize.height), compact ? 72 : 240);
+	// cap the chart height to the container height so the inner SVG never
+	// exceeds the parent (previously used Math.max which caused overflow)
+	const chartHeight = Math.min(Math.max(Math.floor(containerSize.height), 1), compact ? 72 : 240);
+
+	const dataToRender = (data && Array.isArray(data) && data.length > 0) ? data : internalData;
 
 	return (
 		<div ref={containerRef} className={`DeviceMetricChart${compact ? ' is-compact' : ''}`}>
@@ -209,7 +222,7 @@ const DeviceMetricChart = ({
 				<AreaChart
 					width={chartWidth}
 					height={chartHeight}
-					data={data ?? internalData}
+					data={dataToRender}
 					margin={{ top: compact ? 0 : 8, right: compact ? 0 : 8, bottom: compact ? 0 : 12, left: compact ? 0 : 8 }}
 				>
 					<defs>
@@ -233,6 +246,7 @@ const DeviceMetricChart = ({
 						axisLine={false}
 						tickLine={false}
 						tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+						tickFormatter={(value) => Number(value).toFixed(valueDecimals)}
 						label={!compact ? { value: axes.yLabel, angle: -90, position: 'insideLeft', offset: 0, ...axisLabelStyle } : undefined}
 					/>
 					<Tooltip
@@ -240,15 +254,17 @@ const DeviceMetricChart = ({
 						content={renderTooltip}
 						isAnimationActive={false}
 					/>
-					<Area
-						type="monotone"
-						dataKey="value"
-						fill={`url(#${gradId})`}
-						stroke="none"
-						isAnimationActive={false}
-					/>
+					{showArea && (
+						<Area
+							type={interpolation}
+							dataKey="value"
+							fill={`url(#${gradId})`}
+							stroke="none"
+							isAnimationActive={false}
+						/>
+					)}
 					<Line
-						type="monotone"
+						type={interpolation}
 						dataKey="value"
 						stroke={color}
 						strokeWidth={compact ? 2 : 2.5}
@@ -259,7 +275,7 @@ const DeviceMetricChart = ({
 					{series.map((line) => (
 						<Line
 							key={line.dataKey}
-							type="monotone"
+							type={interpolation}
 							dataKey={line.dataKey}
 							name={line.label}
 							stroke={line.color}
