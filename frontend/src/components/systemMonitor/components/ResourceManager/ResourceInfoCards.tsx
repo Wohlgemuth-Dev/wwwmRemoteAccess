@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { systemManagerApi } from '../../../service/api/systemmanager';
+import { systemManagerApi } from '../../../../service/api/systemmanager';
 import MetricCards, { type MetricCardItem } from './MetricCards';
-import { formatBytes } from '../utils';
+import { formatBytes } from '../../utils';
 
 interface Props {
     resourceId: string;

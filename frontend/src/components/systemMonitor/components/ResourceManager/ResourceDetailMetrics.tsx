@@ -1,5 +1,5 @@
 import React from 'react';
-import { useResourceDetailMetrics } from '../hooks';
+import { useResourceDetailMetrics } from '../../hooks';
 import MetricCards, { type MetricCardItem } from './MetricCards';
 
 interface ResourceDetailMetricsProps {
