@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './SystemMonitor.css';
 import { SystemMetricsProvider } from './metrics';
-import SystemResources from './components/SystemResources';
-import ProcessManager from './components/ProcessManager';
+import SystemResources from './components/ResourceManager/SystemResources';
+import ProcessManager from './components/ProcessManager/ProcessManager';
 
 type MonitorPanel = 'resources' | 'processes';
 

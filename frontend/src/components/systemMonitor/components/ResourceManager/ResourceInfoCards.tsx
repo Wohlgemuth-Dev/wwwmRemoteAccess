@@ -7,8 +7,6 @@ interface Props {
     resourceId: string;
 }
 
-// Removed the local formatBytes function as it is now imported from utils
-
 const ResourceInfoCards: React.FC<Props> = ({ resourceId }) => {
     const [info, setInfo] = useState<MetricCardItem[]>([]);
 

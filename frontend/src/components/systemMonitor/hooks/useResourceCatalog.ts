@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ChartAxes } from '../components/DeviceMetricChart';
+import type { ChartAxes } from '../components/ResourceManager/DeviceMetricChart';
 import { useSystemMetrics, type MetricKey, type ResourceKey } from '../metrics';
 
 export interface ResourceDetailMetricConfig {
