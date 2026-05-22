@@ -67,9 +67,8 @@ const ResourceInfoCards: React.FC<Props> = ({ resourceId }) => {
                         if (addrs) items.push({ key: 'addresses', label: 'Addresses', value: addrs });
                     }
                     if (counter) {
-                        items.push({ key: 'bytes-received', label: 'Bytes Received', value: formatBytes(counter.bytesRecv ?? 0) });
-                        items.push({ key: 'bytes-sent', label: 'Bytes Sent', value: formatBytes(counter.bytesSent ?? 0) });
-                        items.push({ key: 'packets', label: 'Packets', value: `${counter.packetsRecv ?? 0} recv / ${counter.packetsSent ?? 0} sent` });
+                        items.push({ key: 'packets-received', label: 'Packets Received', value: `${counter.packetsRecv ?? 0}` });
+                        items.push({ key: 'packets-sent', label: 'Packets Sent', value: `${counter.packetsSent ?? 0}` });
                     }
                     setInfo(items);
                 } else if (resourceId.startsWith('gpu')) {

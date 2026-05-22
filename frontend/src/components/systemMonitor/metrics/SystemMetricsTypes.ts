@@ -19,7 +19,9 @@ export type MetricKey =
 	| 'readBytes'
 	| 'writeBytes'
 	| 'bytesRecv'
-	| 'bytesSent';
+	| 'bytesSent'
+	| 'receivedMbps'
+	| 'sentMbps';
 
 
 export interface ChartPoint {

@@ -42,7 +42,7 @@ export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 
 	start(onSnapshot: (snapshot: SystemMetricsSnapshot) => void) {
 		let snapshot = emptySnapshot();
-		let previousNetworkSamples: Array<{ totalBytes: number; timestamp: number }> = [];
+		let previousNetworkSamples: Array<{ recvBytes: number; sentBytes: number; timestamp: number }> = [];
 		let previousDiskIOSamples: Array<{ readBytes: number; writeBytes: number; timestamp: number }> = [];
 		let isDisposed = false;
 
@@ -149,21 +149,26 @@ export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 
 				const nextNetworkSamples = Array.isArray(network?.counters)
 					? network.counters.map((counter: any, index: number) => {
-					const totalBytes = (counter.bytesRecv ?? 0) + (counter.bytesSent ?? 0);
 					const previous = previousNetworkSamples[index];
-					const usage = previous
-						? clamp(
-							((Math.max(totalBytes - previous.totalBytes, 0) * 8) /
-								Math.max((now - previous.timestamp) / 1000, 1)) /
-							1_000_000,
-							0,
-							100,
-						)
+					const elapsedSeconds = Math.max((now - (previous?.timestamp ?? now)) / 1000, 1);
+					const receivedMbps = previous
+						? clamp(((Math.max((counter.bytesRecv ?? 0) - previous.recvBytes, 0) * 8) / elapsedSeconds) / 1_000_000, 0, 100)
 						: 0;
-						return { totalBytes, timestamp: now, usage };
+					const sentMbps = previous
+						? clamp(((Math.max((counter.bytesSent ?? 0) - previous.sentBytes, 0) * 8) / elapsedSeconds) / 1_000_000, 0, 100)
+						: 0;
+					const usage = clamp(receivedMbps + sentMbps, 0, 100);
+						return {
+							recvBytes: counter.bytesRecv ?? 0,
+							sentBytes: counter.bytesSent ?? 0,
+							timestamp: now,
+							receivedMbps,
+							sentMbps,
+							usage,
+						};
 					})
 					: [];
-				previousNetworkSamples = nextNetworkSamples.map(({ totalBytes, timestamp }) => ({ totalBytes, timestamp }));
+				previousNetworkSamples = nextNetworkSamples.map(({ recvBytes, sentBytes, timestamp }) => ({ recvBytes, sentBytes, timestamp }));
 
 				nextNetworkSamples.forEach((sample, index) => {
 					const resourceId = `network:${index}`;
@@ -173,6 +178,8 @@ export class BackendSystemMetricsUpdater implements SystemMetricsUpdater {
 						cores: updateSeries(snapshot[resourceId]?.cores, network.interfaces?.length ?? 0, this.pointCount),
 						bytesRecv: updateSeries(snapshot[resourceId]?.bytesRecv, counter.bytesRecv ?? 0, this.pointCount),
 						bytesSent: updateSeries(snapshot[resourceId]?.bytesSent, counter.bytesSent ?? 0, this.pointCount),
+						receivedMbps: updateSeries(snapshot[resourceId]?.receivedMbps, sample.receivedMbps, this.pointCount),
+						sentMbps: updateSeries(snapshot[resourceId]?.sentMbps, sample.sentMbps, this.pointCount),
 					};
 				});
 

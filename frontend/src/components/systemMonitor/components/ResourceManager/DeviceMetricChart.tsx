@@ -61,6 +61,10 @@ const hasUsableColor = (value: unknown) => {
     return typeof value === 'string' && value.length > 0 && !value.startsWith('url(') && value !== 'none';
 };
 
+const toGradientId = (baseId: string, key: string) => {
+    return `${baseId}-${key.replace(/[^a-zA-Z0-9_-]/g, '')}`;
+};
+
 const buildInitialData = (pointCount: number, initialValue: number, min: number, max: number): ChartPoint[] => {
     return Array.from({ length: pointCount }, (_, index) => ({
         index,
@@ -215,6 +219,10 @@ const DeviceMetricChart = ({
     const chartHeight = Math.min(Math.max(Math.floor(containerSize.height), 1), compact ? 72 : 240);
 
     const dataToRender = (data && Array.isArray(data) && data.length > 0) ? data : internalData;
+    const seriesGradientIds = series.map((line) => ({
+        ...line,
+        gradientId: toGradientId(gradId, line.dataKey),
+    }));
 
     return (
         <div ref={containerRef} className={`DeviceMetricChart${compact ? ' is-compact' : ''}`}>
@@ -230,6 +238,12 @@ const DeviceMetricChart = ({
                             <stop offset="0%" stopColor={HEX_TO_RGBA(color, 0.4)} />
                             <stop offset="100%" stopColor={HEX_TO_RGBA(color, 0.08)} />
                         </linearGradient>
+                        {seriesGradientIds.map((line) => (
+                            <linearGradient key={line.dataKey} id={line.gradientId} x1="0" x2="0" y1="0" y2="1">
+                                <stop offset="0%" stopColor={HEX_TO_RGBA(line.color, 0.4)} />
+                                <stop offset="100%" stopColor={HEX_TO_RGBA(line.color, 0.08)} />
+                            </linearGradient>
+                        ))}
                     </defs>
                     {!compact && <CartesianGrid stroke="rgba(255, 255, 255, 0.08)" strokeDasharray="3 3" vertical={false} />}
                     <XAxis
@@ -263,6 +277,16 @@ const DeviceMetricChart = ({
                             isAnimationActive={false}
                         />
                     )}
+                    {seriesGradientIds.map((line) => (
+                        <Area
+                            key={`${line.dataKey}-area`}
+                            type={interpolation}
+                            dataKey={line.dataKey}
+                            fill={`url(#${line.gradientId})`}
+                            stroke="none"
+                            isAnimationActive={false}
+                        />
+                    ))}
                     <Line
                         type={interpolation}
                         dataKey="value"

@@ -4,12 +4,61 @@ import ResourceDetailMetrics from './ResourceDetailMetrics';
 import ResourceInfoCards from './ResourceInfoCards';
 import { useSystemMetrics, type ChartPoint } from '../../metrics';
 import { useResourceCatalog } from '../../hooks';
-import { mergeSeries, cumulativeBytesToMbps, getNetworkChartBounds } from '../../metrics/seriesUtils';
-import { formatMbps, formatNumberWithUnit } from '../../formatters';
+import { mergeSeries, getNetworkChartBounds } from '../../metrics/seriesUtils';
+import { formatAutoRate, formatNumberWithUnit } from '../../formatters';
 
 const SystemResources: React.FC = () => {
     const { getSeries, getCurrent } = useSystemMetrics();
     const { resources, selectedResource, setSelectedResource, selectedDetail } = useResourceCatalog();
+
+    const getTileBounds = (resourceUnit: string, tileSeries: ChartPoint[]) => {
+        const values = tileSeries.flatMap((s) => [s.value, s.sent, s.readSpeed, s.writeSpeed].filter((v): v is number => typeof v === 'number' && Number.isFinite(v)));
+
+        if (values.length === 0) {
+            return resourceUnit === '%' ? { min: 0, max: 100 } : { min: 0, max: 1 };
+        }
+
+        const allZero = values.every((value) => value === 0);
+        if (allZero) {
+            return { min: 0, max: 1 };
+        }
+
+        if (resourceUnit === '%') {
+            return { min: 0, max: 100 };
+        }
+
+        return {
+            min: Math.min(...values),
+            max: Math.max(...values),
+        };
+    };
+
+    const normalizeNetworkSeries = (series: ChartPoint[], baseUnit = ' Mbps') => {
+        if (!Array.isArray(series) || series.length === 0) {
+            return { series, unit: baseUnit, scale: 1 };
+        }
+
+        const values = series.flatMap((s) => [s.value, s.sent].filter((v): v is number => typeof v === 'number' && Number.isFinite(v)));
+        const maxAbs = values.length > 0 ? Math.max(...values.map((v) => Math.abs(v))) : 0;
+        const smallValueThresholdMbps = 0.01;
+        const noiseThresholdMbps = 0.000001;
+        const scale = maxAbs > 0 && maxAbs < smallValueThresholdMbps ? 1000 : 1;
+        const unit = scale === 1000 ? ' Kbps' : baseUnit;
+
+        const normalized = series.map((pt) => {
+            const copy = { ...pt } as any;
+            Object.keys(copy).forEach((k) => {
+                if (k === 'index') return;
+                if (typeof copy[k] !== 'number') return;
+
+                const scaledValue = copy[k] * scale;
+                copy[k] = Math.abs(scaledValue) < (noiseThresholdMbps * scale) ? 0 : scaledValue;
+            });
+            return copy as ChartPoint;
+        });
+
+        return { series: normalized, unit, scale };
+    };
 
     if (!selectedDetail) {
         return (
@@ -29,12 +78,19 @@ const SystemResources: React.FC = () => {
     const selectedChartAxes = selectedIsDisk
         ? { xLabel: 'Samples', yLabel: 'KB/s' }
         : selectedDetail.axes;
-    const selectedChartUnit = selectedIsDisk ? ' KB/s' : selectedDetail.unit;
+    let selectedChartUnit = selectedIsDisk ? ' KB/s' : selectedDetail.unit;
+    let selectedNetworkSeriesUnit = ' Mbps';
+    let selectedNetworkSeriesScale = 1;
     const selectedChartData = (() => {
         if (selectedDetail.key === 'network') {
-            const received = cumulativeBytesToMbps(getSeries(selectedDetail.id, 'bytesRecv'));
-            const sent = cumulativeBytesToMbps(getSeries(selectedDetail.id, 'bytesSent'));
-            return mergeSeries(received, { sent });
+            const received = getSeries(selectedDetail.id, 'receivedMbps');
+            const sent = getSeries(selectedDetail.id, 'sentMbps');
+            const merged = mergeSeries(received, { sent });
+            const scaled = normalizeNetworkSeries(merged, selectedDetail.unit);
+            selectedChartUnit = scaled.unit;
+            selectedNetworkSeriesUnit = scaled.unit;
+            selectedNetworkSeriesScale = scaled.scale;
+            return scaled.series;
         }
 
         if (!selectedIsDisk && selectedDetail.id !== 'memory') return getSeries(selectedDetail.id);
@@ -67,9 +123,10 @@ const SystemResources: React.FC = () => {
                     const isSelected = selectedResource === resource.id;
                     const tileSeries = (() => {
                         if (resource.key === 'network') {
-                            const recv = cumulativeBytesToMbps(getSeries(resource.id, 'bytesRecv'));
-                            const sent = cumulativeBytesToMbps(getSeries(resource.id, 'bytesSent'));
-                            return mergeSeries(recv, { sent });
+                            const recv = getSeries(resource.id, 'usage');
+                            const sent = getSeries(resource.id, 'sentMbps');
+                            const merged = mergeSeries(recv, { sent });
+                            return normalizeNetworkSeries(merged, resource.unit);
                         }
 
                         if (resource.key === 'memory') {
@@ -91,10 +148,11 @@ const SystemResources: React.FC = () => {
                         return getSeries(resource.id);
                     })();
 
-                    // compute tile numeric min/max and enforce percent tiles to 0..100
-                    const values = tileSeries.flatMap((s) => [s.value, s.sent, s.readSpeed, s.writeSpeed].filter((v): v is number => typeof v === 'number' && Number.isFinite(v)));
-                    const tileMin = resource.unit === '%' ? 0 : (values.length > 0 ? Math.min(...values) : 0);
-                    const tileMax = resource.unit === '%' ? 100 : (values.length > 0 ? Math.max(...values) : 1);
+                    const tileNetworkDisplay = resource.key === 'network'
+                        ? (tileSeries as ReturnType<typeof normalizeNetworkSeries>)
+                        : undefined;
+                    const tileData = resource.key === 'network' ? tileNetworkDisplay!.series : (tileSeries as ChartPoint[]);
+                    const { min: tileMin, max: tileMax } = getTileBounds(resource.unit, tileData);
 
                     return (
                         <button
@@ -109,8 +167,8 @@ const SystemResources: React.FC = () => {
                                     color={resource.color}
                                     axes={resource.axes}
                                     compact
-                                    data={tileSeries}
-                                    unit={resource.unit}
+                                    data={tileData}
+                                    unit={resource.key === 'network' ? tileNetworkDisplay!.unit : resource.unit}
                                     interpolation={resource.key === 'network' ? 'linear' : undefined}
                                     valueDecimals={resource.key === 'network' ? 2 : 0}
                                     min={tileMin}
@@ -119,10 +177,11 @@ const SystemResources: React.FC = () => {
                             </div>
                             <div className="ResourceTileContent">
                                 <h2>{resource.title}</h2>
-                                <p>{resource.key === 'network'
-                                    ? formatMbps(Number(getCurrent(resource.id)) ?? 0, 2)
-                                    : formatNumberWithUnit(Number(getCurrent(resource.id)) ?? 0, 0, resource.unit)
-                                }</p>
+                                <p>{resource.key === 'network' ? (
+                                    formatAutoRate(Number(getCurrent(resource.id)) * (tileNetworkDisplay?.scale ?? 1), 2, tileNetworkDisplay?.unit ?? resource.unit).valueText
+                                ) : (
+                                    formatNumberWithUnit(Number(getCurrent(resource.id)) ?? 0, 0, resource.unit)
+                                )}</p>
                             </div>
                         </button>
                     );
@@ -136,7 +195,7 @@ const SystemResources: React.FC = () => {
                 <div className="SystemResourceDetailsChart">
                     <DeviceMetricChart
                         color={selectedDetail.color}
-                        axes={selectedChartAxes}
+                        axes={selectedDetail.key === 'network' ? { ...selectedChartAxes, yLabel: selectedNetworkSeriesUnit } : selectedChartAxes}
                         data={selectedChartData}
                         interpolation={selectedDetail.key === 'network' ? 'linear' : undefined}
                         // let disk charts autoscale in KB/s; other resources keep configured bounds
@@ -144,20 +203,20 @@ const SystemResources: React.FC = () => {
                         max={selectedNetworkBounds?.max ?? (selectedIsDisk ? undefined : selectedDetail.max)}
                         initialValue={selectedIsDisk ? undefined : selectedDetail.initialValue}
                         unit={selectedChartUnit}
-                        showArea={selectedDetail.key !== 'network'}
+                        showArea={true}
                         valueDecimals={selectedDetail.key === 'network' ? 2 : 0}
                         primarySeriesLabel={selectedDetail.key === 'network' ? 'Received' : selectedIsDisk ? 'Read' : undefined}
                         series={selectedDetail.key === 'memory' ? [
                             { dataKey: 'swap', label: 'Swap', color: '#60a5fa', unit: '%' },
                         ] : selectedDetail.key === 'network' ? [
-                            { dataKey: 'sent', label: 'Sent', color: '#60a5fa', unit: ' Mbps' },
+                            { dataKey: 'sent', label: 'Sent', color: '#60a5fa', unit: selectedNetworkSeriesUnit },
                         ] : selectedIsDisk ? [
                             { dataKey: 'readSpeed', label: 'Read', color: '#60a5fa', unit: ' KB/s' },
                             { dataKey: 'writeSpeed', label: 'Write', color: '#f97316', unit: ' KB/s' },
                         ] : []}
                     />
                 </div>
-                <ResourceDetailMetrics resourceId={selectedDetail.id} />
+                        <ResourceDetailMetrics resourceId={selectedDetail.id} networkDisplayUnit={selectedDetail.key === 'network' ? selectedNetworkSeriesUnit : undefined} />
                 <ResourceInfoCards resourceId={selectedDetail.id} />
             </div>
         </div>
