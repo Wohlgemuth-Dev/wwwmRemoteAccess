@@ -22,6 +22,8 @@ interface PathBarProps {
     onBreadcrumbDragLeave: (e: React.DragEvent<HTMLButtonElement>) => void;
     onBreadcrumbDrop: (e: React.DragEvent<HTMLButtonElement>) => void;
     handlePathSegmentClick: (path: string) => (e: React.MouseEvent<HTMLButtonElement>) => void;
+    showHidden: boolean;
+    onToggleHidden: () => void;
 }
 
 export const PathBar: React.FC<PathBarProps> = ({
@@ -45,6 +47,8 @@ export const PathBar: React.FC<PathBarProps> = ({
     onBreadcrumbDragLeave,
     onBreadcrumbDrop,
     handlePathSegmentClick,
+    showHidden,
+    onToggleHidden,
 }) => {
     return (
         <>
@@ -53,6 +57,14 @@ export const PathBar: React.FC<PathBarProps> = ({
             </button>
             <button className="nav-button" onClick={onRefresh} title="Refresh">
                 ⟲
+            </button>
+            <button
+                type="button"
+                className={`nav-button${showHidden ? ' is-active' : ''}`}
+                onClick={onToggleHidden}
+                title={showHidden ? 'Hide hidden files' : 'Show hidden files'}
+            >
+                👁
             </button>
             <div className="current-path" onClick={() => onSetEditingPath(true)}>
                 {isEditingPath ? (

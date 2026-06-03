@@ -46,6 +46,17 @@ const FileExplorer: React.FC = () => {
     const [pathError, setPathError] = useState<string | null>(null);
     const [visibleError, setVisibleError] = useState<string | null>(null);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
+    const [showHidden, setShowHidden] = useState<boolean>(() => {
+        return localStorage.getItem('fileExplorer_showHidden') === 'true';
+    });
+
+    const handleToggleHidden = useCallback(() => {
+        setShowHidden((prev) => {
+            const next = !prev;
+            localStorage.setItem('fileExplorer_showHidden', String(next));
+            return next;
+        });
+    }, []);
 
     // For path input validation, we need a ref-based approach due to hook call order
     const validatedChangeRef = useRef<((path: string) => Promise<void>) | undefined>(undefined);
@@ -126,9 +137,14 @@ const FileExplorer: React.FC = () => {
     const sortedFolderContents = useMemo(() => sortFolderContents(fileOperations.rawItems), [fileOperations.rawItems]);
     const folderContents = useMemo(
         () => sortedFolderContents
-            .filter((item) => !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+            .filter((item) => {
+                if (!showHidden && item.name.startsWith('.')) {
+                    return false;
+                }
+                return !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase());
+            })
             .map((item) => ({ ...item, fullPath: joinPathSegment(pathNavigation.path.currentPath, item.name) })),
-        [sortedFolderContents, pathNavigation.path.currentPath, searchQuery],
+        [sortedFolderContents, pathNavigation.path.currentPath, searchQuery, showHidden],
     );
     const allItemPaths = useMemo(() => folderContents.map(getItemKey), [folderContents]);
 
@@ -202,6 +218,8 @@ const FileExplorer: React.FC = () => {
                     dragContext={dragAndDrop.context}
                     breadcrumbDragHandlers={dragAndDrop.breadcrumb}
                     isDownloading={fileOperations.isDownloading}
+                    showHidden={showHidden}
+                    onToggleHidden={handleToggleHidden}
                 />
                 {visibleError && <div className="file-explorer-error">{visibleError}</div>}
                 {fileOperations.loading ? (

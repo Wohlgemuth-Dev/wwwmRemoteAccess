@@ -49,6 +49,8 @@ interface FileExplorerNavBarProps {
         handleDrop: (e: React.DragEvent<HTMLButtonElement>) => void;
     };
     isDownloading?: boolean;
+    showHidden: boolean;
+    onToggleHidden: () => void;
 }
 
 export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
@@ -71,6 +73,8 @@ export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
     dragContext,
     breadcrumbDragHandlers,
     isDownloading,
+    showHidden,
+    onToggleHidden,
 }) => {
     return (
         <div className="file-explorer-navbar">
@@ -95,6 +99,8 @@ export const FileExplorerNavBar: React.FC<FileExplorerNavBarProps> = ({
                 onBreadcrumbDragLeave={breadcrumbDragHandlers.handleDragLeave}
                 onBreadcrumbDrop={breadcrumbDragHandlers.handleDrop}
                 handlePathSegmentClick={pathHandlers.handlePathSegmentClick}
+                showHidden={showHidden}
+                onToggleHidden={onToggleHidden}
             />
             <SelectionBar
                 isSelectAllChecked={selectAll.isSelectAllChecked}
