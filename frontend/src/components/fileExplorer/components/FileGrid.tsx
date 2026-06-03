@@ -34,6 +34,8 @@ interface FileGridProps {
     onItemDragEnd: () => void;
     isItemSelected: (itemPath: string) => boolean;
     isDownloading?: boolean;
+    currentPath: string;
+    onOpenTerminal: (path: string) => void;
 }
 
 export const FileGrid: React.FC<FileGridProps> = ({
@@ -57,6 +59,8 @@ export const FileGrid: React.FC<FileGridProps> = ({
     onItemDragEnd,
     isItemSelected,
     isDownloading,
+    currentPath,
+    onOpenTerminal,
 }) => {
     const [openGridMenuPosition, setOpenGridMenuPosition] = React.useState<MenuPosition | null>(null);
 
@@ -64,8 +68,8 @@ export const FileGrid: React.FC<FileGridProps> = ({
         selectedItemPaths.length > 1
             ? selectedItemPaths
             : openItemMenuPath
-              ? [openItemMenuPath]
-              : [];
+                ? [openItemMenuPath]
+                : [];
     const isRenameDisabled = menuTargetPaths.length > 1;
 
     const getMenuPosition = (e: React.MouseEvent<HTMLDivElement>, menuWidth: number, menuHeight: number): MenuPosition => {
@@ -190,8 +194,8 @@ export const FileGrid: React.FC<FileGridProps> = ({
                     <button type="button" className="file-item-menu-item" onClick={() => onMenuAction('download', menuTargetPaths)} disabled={isDownloading}>
                         Download
                     </button>
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         className="file-item-menu-item"
                         onClick={handleDeleteClick}>
                         Delete
@@ -214,6 +218,16 @@ export const FileGrid: React.FC<FileGridProps> = ({
                     </button>
                     <button type="button" className="file-item-menu-item" onClick={() => handleCreateClick('folder')}>
                         Add Folder
+                    </button>
+                    <button
+                        type="button"
+                        className="file-item-menu-item"
+                        onClick={() => {
+                            closeGridMenu();
+                            onOpenTerminal(currentPath);
+                        }}
+                    >
+                        Open Path in Terminal
                     </button>
                 </div>
             )}

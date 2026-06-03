@@ -36,8 +36,12 @@ const sortFolderContents = <T extends SortableFileItem>(items: T[]) => {
     });
 };
 
+interface FileExplorerProps {
+    onOpenTerminal: (path: string) => void;
+}
+
 // Component
-const FileExplorer: React.FC = () => {
+const FileExplorer: React.FC<FileExplorerProps> = ({ onOpenTerminal }) => {
     const explorerRootRef = useRef<HTMLDivElement>(null);
     const breadcrumbsRef = useRef<HTMLDivElement>(null);
 
@@ -228,6 +232,8 @@ const FileExplorer: React.FC = () => {
                         onItemDragEnd={dragAndDrop.item.handleDragEnd}
                         isItemSelected={fileSelection.isItemSelected}
                         isDownloading={fileOperations.isDownloading}
+                        currentPath={pathNavigation.path.currentPath}
+                        onOpenTerminal={onOpenTerminal}
                     />
                 )}
             </div>
