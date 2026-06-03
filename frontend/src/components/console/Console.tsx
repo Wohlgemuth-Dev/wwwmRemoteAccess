@@ -10,7 +10,12 @@ interface ConsoleLine {
 }
 const generateId = () => Math.random().toString(36).substring(2) + Date.now().toString(36);
 
-const Console: React.FC = () => {
+interface ConsoleProps {
+    initialPath?: string | null;
+    onClearInitialPath?: () => void;
+}
+
+const Console: React.FC<ConsoleProps> = ({ initialPath, onClearInitialPath }) => {
     const { token } = useAuth();
     const [lines, setLines] = useState<ConsoleLine[]>([
         { id: generateId(), text: 'Connecting to server...', type: 'output' },
@@ -22,6 +27,21 @@ const Console: React.FC = () => {
     const lastLineRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLSpanElement>(null);
     const wsRef = useRef<WebSocket | null>(null);
+
+    const initialPathRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        initialPathRef.current = initialPath || null;
+    }, [initialPath]);
+
+    // Handle initialPath navigation if the WebSocket is already open
+    useEffect(() => {
+        if (initialPath && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            const command = `cd "${initialPath}"`;
+            wsRef.current.send(command + '\necho "###CWD###$(pwd)"\n');
+            onClearInitialPath?.();
+        }
+    }, [initialPath, onClearInitialPath]);
 
     // Sync contentEditable with inputValue state programmatically and maintain cursor
     useEffect(() => {
@@ -63,7 +83,13 @@ const Console: React.FC = () => {
 
         ws.onopen = () => {
             setLines(prev => [...prev, { id: generateId(), text: 'Connected to bash socket.', type: 'output' }]);
-            ws.send('echo "###CWD###$(pwd)"\n');
+            if (initialPathRef.current) {
+                const path = initialPathRef.current;
+                ws.send(`cd "${path}"\necho "###CWD###$(pwd)"\n`);
+                onClearInitialPath?.();
+            } else {
+                ws.send('echo "###CWD###$(pwd)"\n');
+            }
         };
 
         ws.onmessage = (event) => {

@@ -9,14 +9,14 @@ export interface ClockResponse {
 }
 
 interface NavbarProps {
+    activeApp: string;
     setActiveApp?: (app: string) => void;
 }
 
-const Navbar = ({ setActiveApp }: NavbarProps) => {
+const Navbar = ({ activeApp, setActiveApp }: NavbarProps) => {
     const { logout } = useAuth();
     const systemTime = useServerTime();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [activeApp, setActiveLocalApp] = useState('home');
 
     const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
@@ -26,7 +26,6 @@ const Navbar = ({ setActiveApp }: NavbarProps) => {
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, app: string) => {
         e.preventDefault();
         setIsMenuOpen(false); // Close menu on navigation
-        setActiveLocalApp(app);
         if (setActiveApp) {
             setActiveApp(app);
         }
