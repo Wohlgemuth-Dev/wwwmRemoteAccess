@@ -2,10 +2,13 @@ package handlers
 
 import "github.com/gofiber/fiber/v2"
 
-// StatusHandler returns the API status
+type StatusResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
 func StatusHandler(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
-		"status":  "success",
-		"message": "API is up and running!",
+	return c.JSON(StatusResponse{
+		Status:  "success",
+		Message: "API is up and running!",
 	})
 }

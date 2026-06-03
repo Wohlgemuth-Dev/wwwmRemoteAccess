@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './Navbar.css';
 import { useAuth } from '../../service/AuthContext';
-import { useServerTime } from '../../hooks/useServerTime';
+import { useServerTime } from './hooks/useServerTime';
 
 export interface ClockResponse {
     status: string;

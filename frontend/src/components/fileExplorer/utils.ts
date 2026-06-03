@@ -7,6 +7,10 @@ export const getItemNameFromPath = (itemPath: string) => {
 
 export const getItemNamesFromPaths = (itemPaths: string[]) => itemPaths.map(getItemNameFromPath);
 
+export const confirmBulkAction = (actionVerb: string, itemNames: string[]) => {
+    return window.confirm(`Are you sure you want to ${actionVerb} the following items?\n\n${itemNames.join('\n')}`);
+};
+
 export const formatFileSize = (bytes: number): string => {
     if (bytes === 0 || isNaN(bytes)) return '0 B';
     

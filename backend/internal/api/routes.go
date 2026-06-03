@@ -6,6 +6,7 @@ import (
 
 	"wwwmRemoteAccess/internal/api/handlers"
 	"wwwmRemoteAccess/internal/api/handlers/fileexplorer"
+	"wwwmRemoteAccess/internal/api/handlers/systemmanager"
 	"wwwmRemoteAccess/internal/api/middleware"
 	"wwwmRemoteAccess/internal/auth"
 )
@@ -40,6 +41,15 @@ func SetupRoutes(app *fiber.App) {
 	api.Post("/fileexplorer/move-bulk", fileexplorer.MoveBulkHandler)
 	api.Post("/fileexplorer/upload", fileexplorer.UploadHandler)
 	api.Post("/fileexplorer/download", fileexplorer.DownloadHandler)
+
+	// System Manager
+	api.Get("/systemmanager/cpu", systemmanager.CPUHandler)
+	api.Get("/systemmanager/disk", systemmanager.DiskHandler)
+	api.Get("/systemmanager/memory", systemmanager.MemoryHandler)
+	api.Get("/systemmanager/network", systemmanager.NetworkHandler)
+	api.Get("/systemmanager/gpu", systemmanager.GPUHandler)
+	api.Get("/systemmanager/processes", systemmanager.ProcessesHandler)
+	api.Post("/systemmanager/processes/kill", systemmanager.KillProcessHandler)
 
 	// Console WebSocket endpoint
 	api.Use("/console", func(c *fiber.Ctx) error {
