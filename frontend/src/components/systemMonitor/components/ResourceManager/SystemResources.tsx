@@ -80,7 +80,6 @@ const SystemResources: React.FC = () => {
         : selectedDetail.axes;
     let selectedChartUnit = selectedIsDisk ? ' KB/s' : selectedDetail.unit;
     let selectedNetworkSeriesUnit = ' Mbps';
-    let selectedNetworkSeriesScale = 1;
     const selectedChartData = (() => {
         if (selectedDetail.key === 'network') {
             const received = getSeries(selectedDetail.id, 'receivedMbps');
@@ -89,7 +88,6 @@ const SystemResources: React.FC = () => {
             const scaled = normalizeNetworkSeries(merged, selectedDetail.unit);
             selectedChartUnit = scaled.unit;
             selectedNetworkSeriesUnit = scaled.unit;
-            selectedNetworkSeriesScale = scaled.scale;
             return scaled.series;
         }
 
@@ -216,7 +214,7 @@ const SystemResources: React.FC = () => {
                         ] : []}
                     />
                 </div>
-                        <ResourceDetailMetrics resourceId={selectedDetail.id} networkDisplayUnit={selectedDetail.key === 'network' ? selectedNetworkSeriesUnit : undefined} />
+                <ResourceDetailMetrics resourceId={selectedDetail.id} networkDisplayUnit={selectedDetail.key === 'network' ? selectedNetworkSeriesUnit : undefined} />
                 <ResourceInfoCards resourceId={selectedDetail.id} />
             </div>
         </div>

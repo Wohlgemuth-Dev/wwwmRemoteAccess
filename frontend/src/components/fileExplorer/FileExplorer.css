@@ -542,9 +542,14 @@
     background: transparent;
 }
 
-.nav-checkbox-button.is-checked {
+.nav-checkbox-button.is-checked,
+.nav-button.is-active {
     background: var(--accent-soft);
     border-color: var(--accent-border-strong);
+}
+
+.nav-button.is-active {
+    color: var(--accent);
 }
 
 .nav-checkbox {

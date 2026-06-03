@@ -49,7 +49,7 @@ func NavigateHandler(c *fiber.Ctx) error {
 	// -l: long listing format to get file sizes
 	// -F: append indicator (/ for directories)
 	// --time-style=long-iso: ensures consistent date formatting for easier parsing
-	cmd, err := handlers.SetupCmd(c, "ls", "-lF", "--time-style=long-iso", targetPath)
+	cmd, err := handlers.SetupCmd(c, "ls", "-AlF", "--time-style=long-iso", targetPath)
 	if err != nil {
 		log.Printf("SetupCmd error: %v", err)
 		return err
