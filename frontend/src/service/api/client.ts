@@ -35,12 +35,26 @@ function buildRequestHeaders(options: RequestInit): Headers {
 
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
     const config: RequestInit = {
         ...options,
         headers: buildRequestHeaders(options),
+        signal: controller.signal,
     };
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    let response: Response;
+    try {
+        response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    } catch (err) {
+        window.dispatchEvent(new CustomEvent('api-error', {
+            detail: { message: 'Server is unreachable. Please check if the backend is running.' }
+        }));
+        throw new ApiError(0, 'Network Error', { error: 'Server unreachable' });
+    } finally {
+        clearTimeout(timeoutId);
+    }
 
     let jsonData: any = undefined;
     const contentType = response.headers.get('content-type');
@@ -49,7 +63,15 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     }
 
     if (!response.ok) {
-        throw new ApiError(response.status, response.statusText, jsonData);
+        const error = new ApiError(response.status, response.statusText, jsonData);
+        if (response.status === 401) {
+            window.dispatchEvent(new CustomEvent('auth-unauthorized'));
+        } else if (response.status >= 500) {
+            window.dispatchEvent(new CustomEvent('api-error', {
+                detail: { message: `Server error (${response.status}): ${error.message}` }
+            }));
+        }
+        throw error;
     }
 
     return (jsonData !== undefined ? jsonData : undefined) as T;
@@ -64,10 +86,18 @@ export const apiClient = {
     // For raw fetch access (e.g. blobs)
     fetch: (endpoint: string, options: RequestInit = {}) => request<unknown>(endpoint, options),
     fetchRaw: async (endpoint: string, options: RequestInit = {}) => {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            ...options,
-            headers: buildRequestHeaders(options),
-        });
+        let response: Response;
+        try {
+            response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                ...options,
+                headers: buildRequestHeaders(options),
+            });
+        } catch (err) {
+            window.dispatchEvent(new CustomEvent('api-error', {
+                detail: { message: 'Server is unreachable. Please check if the backend is running.' }
+            }));
+            throw new ApiError(0, 'Network Error', { error: 'Server unreachable' });
+        }
 
         if (!response.ok) {
             let errorData: unknown;
@@ -78,7 +108,15 @@ export const apiClient = {
                 errorData = { error: response.statusText };
             }
 
-            throw new ApiError(response.status, response.statusText, errorData);
+            const error = new ApiError(response.status, response.statusText, errorData);
+            if (response.status === 401) {
+                window.dispatchEvent(new CustomEvent('auth-unauthorized'));
+            } else if (response.status >= 500) {
+                window.dispatchEvent(new CustomEvent('api-error', {
+                    detail: { message: `Server error (${response.status}): ${error.message}` }
+                }));
+            }
+            throw error;
         }
 
         return response;

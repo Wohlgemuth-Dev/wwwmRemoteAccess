@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from './api/auth';
 
 interface AuthContextType {
@@ -46,16 +46,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = async () => {
+        setToken(null);
+        setLoginTimestamp(null);
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('loginTimestamp');
+        setError(null);
+
         try {
             await authApi.logout();
         } catch (err) {
             // Ignore API errors during logout (e.g., token already expired server-side)
-        } finally {
-            setToken(null);
-            setLoginTimestamp(null);
-            sessionStorage.removeItem('token');
-            sessionStorage.removeItem('loginTimestamp');
-            setError(null);
         }
     };
 
@@ -75,7 +75,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return false;
         }
     };
+    useEffect(() => {
+        const handleUnauthorized = () => {
+            if (sessionStorage.getItem('token')) {
+                logout();
+            }
+        };
 
+        window.addEventListener('auth-unauthorized', handleUnauthorized);
+        return () => window.removeEventListener('auth-unauthorized', handleUnauthorized);
+    }, []);
     return (
         <AuthContext.Provider value={{
             isAuthenticated: !!token,
