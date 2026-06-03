@@ -4,10 +4,26 @@ FRONTEND_DIR = frontend
 BACKEND_DIR = backend
 ASSETS_TARGET_DIR = $(BACKEND_DIR)/internal/assets/dist/frontend_dist
 
-.PHONY: all check install-deps build-frontend copy-assets build-backend clean run install
+.PHONY: all help check install-deps build-frontend copy-assets build-backend clean run install deploy-service reload-service disable-service
 
 # Default target
 all: check build-frontend copy-assets build-backend reload-service
+
+help:
+	@echo "Available commands:"
+	@echo "  make help           - Show this help message"
+	@echo "  make all            - Build frontend and backend, copy assets, reload service"
+	@echo "  make check          - Check if required dependencies are installed"
+	@echo "  make install-deps   - Install required dependencies via apt"
+	@echo "  make build-frontend - Build the React frontend"
+	@echo "  make copy-assets    - Copy compiled frontend assets to backend"
+	@echo "  make build-backend  - Build the Go backend"
+	@echo "  make clean          - Remove all build artifacts"
+	@echo "  make run            - Run the Go backend server for development"
+	@echo "  make install        - Build and install application to /usr/local/bin"
+	@echo "  make deploy-service - Deploy systemd service, reload, and enable it"
+	@echo "  make reload-service - Restart the systemd service"
+	@echo "  make disable-service- Disable and stop the systemd service"
 
 check:
 	@echo "Checking dependencies..."
