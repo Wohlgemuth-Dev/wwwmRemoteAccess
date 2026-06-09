@@ -84,12 +84,17 @@ sudo make install
 
 #### 4. Deploying as a Background Service
 
-To deploy the application as a persistent background service that automatically starts on boot, run:
+To deploy the application as a persistent background service that automatically starts on boot:
+
+> [!IMPORTANT]
+> Before deploying, you must edit the systemd service template [wwwmremote-backend.service](file:///home/aaron/dev/wwwmRemoteAccess/wwwmremote-backend.service) in the root of the project directory. Update the `WorkingDirectory` and `ExecStart` paths to match the actual location where the repository is cloned on your system (replacing the `/[PATH-TO-REPO]/` placeholders).
+
+Run the deployment command:
 
 ```bash
 make deploy-service
 ```
-This command copies the `wwwmremote-backend.service` file to `/etc/systemd/system/`, reloads the systemd daemon, enables the service to start on boot, and starts it immediately.
+This command copies the updated `wwwmremote-backend.service` file to `/etc/systemd/system/`, reloads the systemd daemon, enables the service to start on boot, and starts it immediately.
 
 You can later restart or disable the service using:
 ```bash
