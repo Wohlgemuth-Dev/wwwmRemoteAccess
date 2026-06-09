@@ -126,4 +126,10 @@ To execute this entire pipeline manually during development:
 make build-frontend && make copy-assets && make build-backend
 ```
 
+### ⚙️ Systemd Service Deployment
+When deploying the application as a persistent background service (via `make deploy-service`):
+- You must modify the [wwwmremote-backend.service](file:///home/aaron/dev/wwwmRemoteAccess/wwwmremote-backend.service) file in the root project folder before running the installation/deployment commands.
+- Specifically, update the `WorkingDirectory` and `ExecStart` paths to point to the actual directories/files in your system (replacing the `/[PATH-TO-REPO]/` placeholder).
+
+
 
