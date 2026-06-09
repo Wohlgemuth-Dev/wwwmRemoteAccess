@@ -39,7 +39,7 @@ const Navbar = ({ activeApp, setActiveApp }: NavbarProps) => {
         <nav className="navbar">
             <div className="navbar-left">
                 <div className="navbar-brand">
-                    <a href="/" className={activeApp === 'home' ? 'active' : ''} onClick={(e) => handleNavClick(e, 'home')}>Home</a>
+                    <a href="/console" className={activeApp === 'console' ? 'active' : ''} onClick={(e) => handleNavClick(e, 'console')}>wwwmRemoteAccess</a>
                 </div>
                 <button className="hamburger-menu" onClick={toggleMenu} aria-label="Toggle menu">
                     {isMenuOpen ? '✕' : '☰'}
